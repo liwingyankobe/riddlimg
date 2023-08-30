@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+	<head> 
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>RiddlImg - All you can do with online riddle images</title>
+		<meta name="title" content="RiddlImg">
+		<meta name="author" content="Kobe Li (infiniteXforever)">
+		<meta name="description" content="All you can do with online riddle images">
+		<meta name="keywords" content="RiddlImg, The String Harmony, thestringharmony, image, steg, steganography, riddle, online riddle, capture the flag, CTF">
+		<link rel="stylesheet" type="text/css" href="style.css">
+		<script src="riddlimg.js"></script>
+		<script src="libgif.js"></script>
+	</head>
+	<body>
+		<div id="upload">
+			<form enctype="multipart/form-data">
+				File: <input type="file" id="file" value="">
+				URL: <input type="url" id="url" value="" onkeypress="enterURL(event)">
+				<input type="button" class="submit" value="Submit" onclick="upload()">
+			</form>
+			<p id="msg">Upload an image or enter a URL.</p>
+		</div>
+		<div id="imageArea" class="invisible">
+			<canvas id="image" onclick="lock(event)" onmousemove="updateCoords(event)"></canvas>
+		</div>
+		<div id="coords" class="invisible">
+			X: <span id="x" class="data">0</span>&nbsp;
+			Y: <span id="y" class="data">0</span>
+			<span id="lock"></span><br>
+			R: <span id="r" class="data">0</span>&nbsp;
+			G: <span id="g" class="data">0</span>&nbsp;
+			B: <span id="b" class="data">0</span>&nbsp;
+			#<span id="rgbColor" class="data">000000</span>
+			<span id="inverse" class="invisible">&nbsp;(Inversed)</span>
+		</div>
+		<div id="brightnessPanel" class="invisible">
+			<br>
+			<form>
+				Brightness: <input type="range" class="slider" id="brightnessSlider" min="-100" max="100" value="0" onchange="brightness()" oninput="brightness()">
+				<span id="brightnessValue" class="dataButton"></span>
+			</form>
+		</div>
+		<div id="thresholdPanel" class="invisible">
+			<br>
+			<form>
+				Threshold: <input type="range" class="slider" id="thresholdSlider" min="1" max="255" value="128" onchange="threshold()" oninput="threshold()">
+				<span id="thresholdValue" class="dataButton"></span>
+			</form>
+		</div>
+		<div id="channelPanel" class="invisible">
+			<br>
+			<button class="triangle-left" onclick="changeChannel(-1)"></button>
+			<span id="channel" class="dataButton"></span>
+			<button class="triangle-right" onclick="changeChannel(1)"></button>
+		</div>
+		<div id="bitPlanePanel" class="invisible">
+			<br>
+			<button class="triangle-left" onclick="changeBitPlane(-1,0)"></button>
+			<span id="bitPlaneChannel" class="dataButton"></span>
+			<button class="triangle-right" onclick="changeBitPlane(1,0)"></button>
+			<button class="triangle-left" onclick="changeBitPlane(0,-1)"></button>
+			<span id="bitPlane" class="dataButton"></span>
+			<button class="triangle-right" onclick="changeBitPlane(0,1)"></button>
+		</div>
+		<div id="combinePanel" class="invisible">
+			<br>
+			<button class="triangle-left" onclick="combineImages(-1)"></button>
+			<span id="combineMode" class="dataButton"></span>
+			<button class="triangle-right" onclick="combineImages(1)"></button>
+		</div>
+		<div id="framePanel" class="invisible">
+			<br>
+			<button class="triangle-left" onclick="viewFrame(-1)"></button>
+			<span id="frameNo" class="dataButton"></span>
+			<button class="triangle-right" onclick="viewFrame(1)"></button>
+			<div id="gifContainer" class="invisible">
+				<img id="gifImage"/>
+			</div>
+		</div>
+		<br>
+		<div id="operations" class="invisible">
+			<form>
+				<input type="button" class="button" value="Adjust brightness" onclick="brightness()">
+				<input type="button" class="button" value="Adjust threshold" onclick="threshold()">
+				<input type="button" class="button" value="View channels" onclick="changeChannel(0)">
+				<input type="button" class="button" value="View bit planes" onclick="changeBitPlane(0,0)">
+				<input type="button" class="button" value="View frames" onclick="initFrame()">
+				<input type="button" class="button" value="Inverse color" onclick="inverse()"><br><br>
+				<input type="button" class="button" value="View EXIF" onclick="viewExif()">
+				<input type="button" class="button" value="View hidden content" onclick="hiddenContent()">
+				<input type="button" class="button" value="Reverse image search" onclick="imageSearch()">
+				<input type="button" class="button" value="Combine two images" onclick="switchCombine(true)">
+				<input type="button" class="button" value="Extract LSB data" onclick="initLSB()"><br><br>
+				<input type="button" class="button" value="Work with current image" onclick="work()">
+				<input type="button" class="button" value="Reset image" onclick="resetImage()">
+			</form>
+		</div>
+		<div id="exifPanel" class="invisible">
+			<br>
+			<table id="potentialTable">
+			</table><br>
+			<button class="button" id="fullExif" onclick="fullExif()">View full EXIF</button><br><br>
+			<table id="exifTable" class="invisible">
+			</table>
+		</div>
+		<div id="contentPanel" class="invisible">
+			<br>
+			<p><span id="contentType">Content</span> hidden after the end of image:</p>
+			<textarea id="content" disabled></textarea><br><br>
+			<button class="button" id="contentSave">Save</button>
+		</div>
+		<div id="lsbPanel" class="invisible">
+			<br>
+			<p>Preview:</p>
+			<textarea id="lsbPreview" disabled></textarea><br><br>
+			<table class="lsbTable">
+				<tr>
+					<th></th><th>7</th><th>6</th><th>5</th><th>4</th><th>3</th><th>2</th><th>1</th><th>0</th>
+				</tr>
+				<tr>
+					<th>Red</th>
+					<td><input type="checkbox" id="r7"></td>
+					<td><input type="checkbox" id="r6"></td>
+					<td><input type="checkbox" id="r5"></td>
+					<td><input type="checkbox" id="r4"></td>
+					<td><input type="checkbox" id="r3"></td>
+					<td><input type="checkbox" id="r2"></td>
+					<td><input type="checkbox" id="r1"></td>
+					<td><input type="checkbox" id="r0"></td>
+				</tr>
+				<tr>
+					<th>Green</th>
+					<td><input type="checkbox" id="g7"></td>
+					<td><input type="checkbox" id="g6"></td>
+					<td><input type="checkbox" id="g5"></td>
+					<td><input type="checkbox" id="g4"></td>
+					<td><input type="checkbox" id="g3"></td>
+					<td><input type="checkbox" id="g2"></td>
+					<td><input type="checkbox" id="g1"></td>
+					<td><input type="checkbox" id="g0"></td>
+				</tr>
+				<tr>
+					<th>Blue</th>
+					<td><input type="checkbox" id="b7"></td>
+					<td><input type="checkbox" id="b6"></td>
+					<td><input type="checkbox" id="b5"></td>
+					<td><input type="checkbox" id="b4"></td>
+					<td><input type="checkbox" id="b3"></td>
+					<td><input type="checkbox" id="b2"></td>
+					<td><input type="checkbox" id="b1"></td>
+					<td><input type="checkbox" id="b0"></td>
+				</tr>
+			</table><br>
+			<form>
+				Pixel order: 
+				<select id="pixelOrder">
+					<option value="row">Row</option>
+					<option value="column">Column</option>
+				</select>
+				Bit order: 
+				<select id="bitOrder">
+					<option value="lsb">LSB</option>
+					<option value="msb">MSB</option>
+				</select>
+				Bit plane order: 
+				<select id="bitPlaneOrder">
+					<option value="rgb">RGB</option>
+					<option value="rbg">RBG</option>
+					<option value="grb">GRB</option>
+					<option value="gbr">GBR</option>
+					<option value="brg">BRG</option>
+					<option value="bgr">BGR</option>
+				</select><br><br>
+				<input type="button" class="button" value="Extract" onclick="extractLSB()">
+				<input type="button" class="button" value="Save" onclick="saveFile(lsbData, 'txt')">
+			</form>
+		</div>
+		<br>
+		<a target="_blank" href="https://github.com/liwingyankobe/riddlimg" class="about">About RiddlImg</a>
+		<form id="imageSearch" class="invisible" target="_blank" action="https://lens.google.com/upload" method="POST" enctype="multipart/form-data">
+			<input type="file" id="fileSearch" name="encoded_image">
+		</form>
+		<a id="fileSave" class="invisible"></a>
+	</body>
+</html>

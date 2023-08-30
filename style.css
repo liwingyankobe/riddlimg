@@ -1,0 +1,216 @@
+@font-face {
+  font-family: 'Source Sans Pro';
+  font-style: normal;
+  font-weight: 400;
+  src: url(https://fonts.gstatic.com/s/sourcesanspro/v21/6xK3dSBYKcSV-LCoeQqfX1RYOo3qOK7l.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Source Sans Pro';
+  font-style: normal;
+  font-weight: 700;
+  src: url(https://fonts.gstatic.com/s/sourcesanspro/v21/6xKydSBYKcSV-LCoeQqfX1RYOo3ig4vwlxdu.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+body{
+    padding-top:25px;
+    background-color:#000000;
+    color:#ffffff;
+    font-family:"Source Sans Pro",sans-serif;
+    line-height:1.618;
+	text-align:center;
+    text-rendering:optimizeLegibility;
+    font-weight:400
+}
+
+.invisible{
+	display:none;
+}
+
+canvas{
+	cursor: pointer;
+}
+
+.data, .dataButton{
+	font-weight:700
+}
+
+.dataButton{
+	display:inline-block;
+	width:50px;
+}
+
+.button, .submit{
+	border: none;
+	color: white;
+	padding: 8px 12px;
+	text-align: center;
+	text-decoration: none;
+	font-family:"Source Sans Pro",sans-serif;
+	display: inline-block;
+	transition: 0.2s;
+	cursor: pointer;
+}
+
+.button{
+	background-color: #1f1e33;
+	border-radius: 4px;
+	margin-left: 3px;
+	margin-right: 3px;
+}
+
+.submit{
+	background-color: #5d5a99;
+	margin-left: 80px;
+}
+
+.button:hover{
+	background-color: #5d5a99;
+}
+
+::file-selector-button, input[type=file], input[type=url]{
+	font-family:"Source Sans Pro",sans-serif;
+}
+
+select{
+	font-family:"Source Sans Pro",sans-serif;
+	margin-right: 30px;
+}
+
+select:nth-last-of-type(1){
+	margin-right: 0px;
+}
+
+.triangle-left, .triangle-right{
+	border-top: 15px solid transparent;
+	border-bottom: 15px solid transparent;
+	background: #000000;
+	vertical-align: middle;
+	margin-left: 20px;
+	margin-right: 20px;
+	transition: 0.2s;
+	cursor: pointer;
+	outline: none;
+}
+
+.triangle-left{
+	border-left: none;
+	border-right: 25px solid;
+	border-right-color: #5d5a99;
+}
+
+.triangle-right{
+	border-right: none;
+	border-left: 25px solid;
+	border-left-color: #5d5a99;
+}
+
+.triangle-left:hover{
+	border-right-color: #7d78cc;
+}
+
+.triangle-right:hover{
+	border-left-color: #7d78cc;
+}
+
+.slider{
+	-webkit-appearance: none;
+	appearance: none;
+	width: 400px;
+	height: 5px;
+	border-radius: 2.5px;
+	background: #5d5a99;
+	outline: none;
+	vertical-align: inline-block;
+	margin-left: 20px;
+	margin-right: 20px;
+	cursor: pointer;
+}
+
+.slider::-webkit-slider-thumb {
+	-webkit-appearance: none;
+	appearance: none;
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	border: none;
+	transition: 0.2s;
+	background: #dddddd;
+	cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	border: none;
+	transition: 0.2s;
+	background: #cccccc;
+	cursor: pointer;
+}
+
+.slider::-webkit-slider-thumb:hover{
+	background: #ffffff
+}
+
+.slider::-moz-range-thumb:hover{
+	background: #ffffff
+}
+
+textarea{
+	resize: none;
+	width: 500px;
+	height: 250px;
+	border: 2px solid #5d5a99;
+	border-radius: 4px;
+	background-color: #000000;
+	color: #ffffff;
+	font-family:"Source Sans Pro",sans-serif;
+}
+
+table{
+	width: 700px;
+	margin-left: auto;
+	margin-right: auto;
+	border-collapse: collapse;
+	word-break:break-all;
+}
+
+.lsbTable{
+	table-layout: fixed;
+}
+
+tr:hover{
+	background-color: #181818;
+}
+
+th{
+	background-color: #5d5a99;
+}
+
+.exifItem{
+	width: 230px;
+	padding-right: 30px;
+	text-align: justify;
+	vertical-align:top;
+}
+
+.exifData{
+	width: 470px;
+	text-align: justify;
+	vertical-align:top;
+}
+
+a,a:visited{
+    color:#9c96ff;
+}
+
+a:hover{
+    text-decoration:none
+}
+
+.about{
+	font-size:12px;
+}

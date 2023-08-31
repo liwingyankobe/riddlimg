@@ -30,7 +30,7 @@ body{
 }
 
 canvas{
-	cursor: pointer;
+	cursor: crosshair;
 }
 
 .data, .dataButton{

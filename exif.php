@@ -9,6 +9,9 @@ use PHPExiftool\Driver\Value\ValueInterface;
 if (!isset($_FILES['image']))
 	exit();
 
+if ($_FILES['image']['size'][0] > 10000000)
+	exit();
+
 $logger = new Logger('exiftool');
 $reader = Reader::create($logger);
 $metadataBag = $reader->files($_FILES['image']['tmp_name'][0])->first();
@@ -23,7 +26,10 @@ foreach ($metadataBag as $metadata) {
 		continue;
 	if ($group != $prev)
 		$result[$group] = array();
-	$result[$group][$name] = utf8_encode($value->asString());
+	if ($name == 'ThumbnailImage')
+		$result[$group][$name] = utf8_encode($value->asString());
+	else
+		$result[$group][$name] = mb_convert_encoding($value->asString(), 'UTF-8');
 	$prev = $group;
 }
 

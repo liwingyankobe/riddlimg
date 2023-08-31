@@ -407,6 +407,13 @@ function saveFile(fileContent, fileExtension) {
 	save.click();
 }
 
+function saveCanvas() {
+	const save = document.getElementById('fileSave');
+	save.href = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+	save.download = 'edited.png';
+	save.click();
+}
+
 function fullExif(){
 	if (document.getElementById('fullExif').innerText == 'View full EXIF') {
 		document.getElementById('exifTable').style.display = 'block';
@@ -470,7 +477,7 @@ function viewExif() {
 				else if (/^[\u0000-\u007f]*$/.test(entry[1]))
 					value.innerText = entry[1];
 				else {
-					const blob = new Blob([entry[1]], {type: 'text/plain'});
+					const blob = new Blob([entry[1]], {type:"text/plain;charset=UTF-8"});
 					let a = document.createElement('a');
 					a.target = '_blank';
 					a.href = URL.createObjectURL(blob);

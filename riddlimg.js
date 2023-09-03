@@ -209,35 +209,50 @@ function changeChannel(step){
 	ctx.putImageData(newImageData, 0, 0);
 }
 
-function changeBitPlane(channelStep, planeStep){
-	if (channelStep == 0 && planeStep == 0) showPanel('bitPlanePanel');
-	const channelName = ['Red', 'Green', 'Blue', 'RGB'];
-	bitPlaneChannel = (bitPlaneChannel + channelStep + 4) % 4;
-	bitPlane = (bitPlane + planeStep + 8) % 8;
-	document.getElementById('bitPlaneChannel').innerText = channelName[bitPlaneChannel];
-	document.getElementById('bitPlane').innerText = bitPlane.toString();
-	let newImageData = structuredClone(originalImageData);
-	let pixels = newImageData.data;
-	for (let i = 0; i < pixels.length; i += 4) {
-		if (bitPlaneChannel == 3) {
-			for (let j = 0; j < 3; j++) {
-				const bit = (pixels[i+j] >> bitPlane) & 1;
-				if (bit == 1)
-					pixels[i+j] = 255;
-				else
-					pixels[i+j] = 0;
-			}
-		} else {
-			const bit = (pixels[i+bitPlaneChannel] >> bitPlane) & 1;
-			if (bit == 1) {
-				for (let j = 0; j < 3; j++)
-					pixels[i+j] = 255;
-			} else {
-				for (let j = 0; j < 3; j++)
-					pixels[i+j] = 0;
-			}
+function hasAlphaChannel(imageData) {
+	let pixels = imageData.data;
+	for (let i = 3; i < pixels.length; i += 4) {
+		if (pixels[i] !== 255) {
+			return true;
 		}
 	}
+	return false;
+}
+
+function changeBitPlane(channelStep, planeStep){
+	if (channelStep === 0 && planeStep === 0) showPanel('bitPlanePanel');
+
+    const newImageData = structuredClone(originalImageData);
+    const channelCount = hasAlphaChannel(newImageData) ? 5 : 4;
+    const channelName = ['Red', 'Green', 'Blue', 'RGB'].concat(channelCount === 5 ? ['Alpha'] : []);
+    
+    bitPlaneChannel = (bitPlaneChannel + channelStep + channelCount) % channelCount;
+    bitPlane = (bitPlane + planeStep + 8) % 8;
+
+    document.getElementById('bitPlaneChannel').innerText = channelName[bitPlaneChannel];
+    document.getElementById('bitPlane').innerText = bitPlane.toString();
+	
+	let pixels = newImageData.data;
+	for (let i = 0; i < pixels.length; i += 4) {
+        let bitValue;
+        
+        if (bitPlaneChannel < 3) {
+            bitValue = (pixels[i + bitPlaneChannel] >> bitPlane) & 1;
+        }
+
+        for (let j = 0; j < 3; j++) {
+            if (bitPlaneChannel === 3) {
+                bitValue = (pixels[i + j] >> bitPlane) & 1;
+            } else if (bitPlaneChannel === 4) {
+                bitValue = (pixels[i + 3] >> bitPlane) & 1;
+            }
+            pixels[i + j] = bitValue ? 255 : 0;
+        }
+
+        if (bitPlaneChannel === 4) {
+            pixels[i + 3] = 255;
+        }
+    }
 	ctx.putImageData(newImageData, 0, 0);
 }
 

@@ -23,7 +23,7 @@ such as CTF. Please share this tool to your community if you like it :)
 	- using the library [libgif-js](https://github.com/buzzfeed/libgif-js)
 * Inverse color
 * View EXIF data from `exiftool` (**with a selection of commonly used EXIF tags**)
-	- using the library [PHPExiftool](https://github.com/alchemy-fr/PHPExiftool)
+	- using the library [PHPExiftool](https://github.com/romainneutron/PHPExiftool)
 * View hidden content after the end of PNG/JPG
 * Shortcut for reverse image search with [Google Lens](https://images.google.com)
 * Combine two images with various blending modes

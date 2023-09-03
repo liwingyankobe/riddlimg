@@ -442,7 +442,8 @@ function viewExif() {
 			'Artist', 'Copyright', 'DateTimeOriginal', 'CreateDate', 'UserComment', 'OwnerName',
 			'GPSLatitudeRef', 'GPSLatitude', 'GPSLongitudeRef', 'GPSLongitude', 'ObjectName',
 			'Keywords', 'Headline', 'Caption-Abstract', 'Location', 'Creator', 'Description',
-			'Title', 'Label', 'Rating', 'GPSPosition', 'ThumbnailImage'];
+			'Title', 'Label', 'Rating', 'Comment', 'GPSPosition', 'ThumbnailImage', 'XPAuthor',
+			'XPComment', 'XPKeywords', 'XPSubject', 'XPTitle'];
 		const exifData = Object.entries(data);
 		let potentialTable = document.getElementById('potentialTable');
 		let fullTable = document.getElementById('exifTable');
@@ -474,7 +475,7 @@ function viewExif() {
 					img.src = URL.createObjectURL(blob);
 					value.appendChild(img);
 				}
-				else if (/^[\u0000-\u007f]*$/.test(entry[1]))
+				else if (/^[\u0020-\u007e]*$/.test(entry[1]))
 					value.innerText = entry[1];
 				else {
 					const blob = new Blob([entry[1]], {type:"text/plain;charset=UTF-8"});

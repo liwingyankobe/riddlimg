@@ -70,8 +70,17 @@ canvas{
 	background-color: #5d5a99;
 }
 
-::file-selector-button, input[type=file], input[type=url]{
+::file-selector-button, input[type=file], input[type=url], input[type=text]{
 	font-family:"Source Sans Pro",sans-serif;
+}
+
+label{
+	display:inline-block;
+	width: 90px;
+}
+
+.code{
+	margin-right: 20px;
 }
 
 select{

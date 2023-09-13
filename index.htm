@@ -80,20 +80,31 @@
 				<img id="gifImage"/>
 			</div>
 		</div>
+		<div id="advancedPanel" class="invisible">
+			<br>
+			<form>
+				<label for="rExpression"><span class="code">r</span> = </label><input type="text" id="rExpression"><br>
+				<label for="gExpression"><span class="code">g</span> = </label><input type="text" id="gExpression"><br>
+				<label for="bExpression"><span class="code">b</span> = </label><input type="text" id="bExpression"><br><br>
+				<input type="button" class="button" value="Execute" onclick="executeExpressions()">
+				<input type="button" class="button" value="Help" onclick="advancedHelp()">
+			</form>
+		</div>
 		<br>
 		<div id="operations" class="invisible">
 			<form>
-				<input type="button" class="button" value="Adjust brightness" onclick="brightness()">
-				<input type="button" class="button" value="Adjust threshold" onclick="threshold()">
-				<input type="button" class="button" value="View channels" onclick="changeChannel(0)">
-				<input type="button" class="button" value="View bit planes" onclick="changeBitPlane(0,0)">
-				<input type="button" class="button" value="View frames" onclick="initFrame()">
-				<input type="button" class="button" value="Inverse color" onclick="inverse()"><br><br>
-				<input type="button" class="button" value="View EXIF" onclick="viewExif()">
-				<input type="button" class="button" value="View hidden content" onclick="hiddenContent()">
-				<input type="button" class="button" value="Reverse image search" onclick="imageSearch()">
+				<input type="button" class="button" value="Brightness" onclick="brightness()">
+				<input type="button" class="button" value="Threshold" onclick="threshold()">
+				<input type="button" class="button" value="Channels" onclick="changeChannel(0)">
+				<input type="button" class="button" value="Bit planes" onclick="changeBitPlane(0,0)">
+				<input type="button" class="button" value="Frames" onclick="initFrame()">
+				<input type="button" class="button" value="Inverse" onclick="inverse()">
+				<input type="button" class="button" value="Advanced" onclick="initAdvanced()"><br><br>
+				<input type="button" class="button" value="EXIF" onclick="viewExif()">
+				<input type="button" class="button" value="Hidden content" onclick="hiddenContent()">
+				<input type="button" class="button" value="Yandex" onclick="imageSearch()">
 				<input type="button" class="button" value="Combine two images" onclick="switchCombine(true)">
-				<input type="button" class="button" value="Extract LSB data" onclick="initLSB()"><br><br>
+				<input type="button" class="button" value="LSB data" onclick="initLSB()"><br><br>
 				<input type="button" class="button" value="Work with current image" onclick="work()">
 				<input type="button" class="button" value="Reset image" onclick="resetImage()">
 				<input type="button" class="button" value="Save current image" onclick="saveImage()">

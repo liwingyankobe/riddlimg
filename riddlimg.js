@@ -230,8 +230,8 @@ function updateCoords(){
 	for (let i = 0; i < channelCount; i++){
 		hex = pixel[i].toString(16);
 		if (hex.length == 1)
-			hex = '0' + hex
-		colorhex = colorhex + hex
+			hex = '0' + hex;
+		colorhex = colorhex + hex;
 	}
 	document.getElementById('rgbColor').innerText = colorhex;
 }
@@ -265,12 +265,12 @@ function resetImage(){
 		panelButton = '';
 		document.getElementById('msg').innerText = instruction;
 	}
-	currentImageData = originalImageData;
+	currentImageData = structuredClone(originalImageData);
 	draw(originalImageData);
 }
 
 function work(){
-	originalImageData = currentImageData;
+	originalImageData = structuredClone(currentImageData);
 	if (hasAlphaChannel(originalImageData))
 		document.getElementById('alphaContainer').style.display = 'inline';
 	else
@@ -738,4 +738,69 @@ function extractLSB() {
 		}
 	}
 	document.getElementById('lsbPreview').innerText = lsbData;
+}
+
+function initAdvanced() {
+	resetImage();
+	showPanel('advancedPanel');
+}
+
+function advancedHelp() {
+	alert('Enter JavaScript expressions to manipulate pixel values in custom ways.\n' +
+	'The results are rounded off to integers between 0 and 255.\n' +
+	'Lock the color picker to execute on one color only.\n' +
+	'Accepted characters: r, g, b, 0-9, +-*/%()=<>!&|^?:');
+}
+
+function executeExpressions() {
+	const rgb = ['r', 'g', 'b'];
+	let ex = [];
+	for (let i = 0; i < 3; i++) {
+		ex.push(document.getElementById(rgb[i] + 'Expression').value);
+		if (!/^[0-9rgb+\-*\/%()=<>!&|^?: ]*$/.test(ex[i])) {
+			document.getElementById('msg').innerText = 'Invalid expressions!';
+			return;
+		}
+	}
+	const backupImageData = structuredClone(currentImageData);
+	try {
+		let fn = [];
+		let color = [];
+		const coord = parseInt(document.getElementById('y').innerText) * imageWidth + 
+			parseInt(document.getElementById('x').innerText);
+		let pixels = currentImageData.data;
+		for (let i = 0; i < 3; i++) {
+			fn.push(Function('r', 'g', 'b', 'return ' + ex[i]));
+			color.push(pixels[4 * coord + i]);
+		}
+		for (let i = 0; i < pixels.length; i += 4) {
+			if (locked && (pixels[i] !== color[0] || pixels[i+1] !== color[1] || pixels[i+2] !== color[2]))
+				continue;
+			let pxval = [];
+			for (let j = 0; j < 3; j++) {
+				let val = Math.round(fn[j](pixels[i], pixels[i+1], pixels[i+2]));
+				val = val < 0 ? 0 : val > 255 ? 255 : val;
+				pxval.push(val);
+			}
+			for (let j = 0; j < 3; j++)
+				pixels[i+j] = pxval[j];
+		}
+		draw(currentImageData);
+		for (let i = 0; i < 3; i++)
+			document.getElementById(rgb[i]).innerText = pixels[4 * coord + i].toString();
+		let colorhex = '';
+		const channelCount = (document.getElementById('alphaContainer').style.display == 'inline') ? 4 : 3;
+		for (let i = 0; i < channelCount; i++){
+			hex = pixels[4 * coord + i].toString(16);
+			if (hex.length == 1)
+				hex = '0' + hex;
+			colorhex = colorhex + hex;
+		}
+		document.getElementById('rgbColor').innerText = colorhex;
+		document.getElementById('msg').innerText = instruction;
+	} catch {
+		document.getElementById('msg').innerText = 'Invalid expressions!';
+		currentImageData = structuredClone(backupImageData);
+		draw(currentImageData);
+	}
 }

@@ -28,7 +28,7 @@ let framesData = null;
 let frameNo = 0;
 let canvas;
 let ctx;
-const instruction = 'Scroll to zoom. Drag to translate. Click to lock.';
+const instruction = 'Scroll to zoom. Drag to move. Click to lock.';
 
 window.onload = () => {
 	document.getElementById('file').value = '';
@@ -77,7 +77,12 @@ async function upload(){
 			message.innerText = 'Invalid URL!';
 			return;
 		}
-		const response = await fetch('https://corsproxy.io/?' + document.getElementById('url').value);
+		let data = new FormData();
+		data.append('url', document.getElementById('url').value);
+		const response = await fetch('download.php', {
+			method: 'POST',
+			body: data
+		});
 		if (!response.ok) {
 			message.innerText = 'URL not found!';
 			return;
@@ -307,18 +312,27 @@ function inverse(){
 }
 
 function imageSearch(){
+	document.getElementById('msg').innerText = 'Loading...';
 	let fakeCanvas = document.createElement('canvas');
 	fakeCanvas.width = imageWidth;
 	fakeCanvas.height = imageHeight;
 	let fakeCtx = fakeCanvas.getContext('2d');
 	fakeCtx.putImageData(originalImageData, 0, 0);
 	fakeCanvas.toBlob((blob) => {
-		let searchFile = new File([blob], "image.png", {type: "image/png"});
-		let container = new DataTransfer(); 
-		container.items.add(searchFile);
-		document.getElementById('fileSearch').files = container.files;
-		document.getElementById('imageSearch').submit();
-	});
+		const searchFile = new File([blob], "image.jpg", {type: "image/jpeg"});
+		let formData = new FormData();
+		formData.append('image[]', searchFile);
+		fetch('yandex.php', {
+			method: 'POST',
+			body: formData
+		})
+		.then((response) => response.text())
+		.then((data) => {
+			document.getElementById('imageSearch').href = data;
+			document.getElementById('imageSearch').click();
+			document.getElementById('msg').innerText = instruction;
+		});
+	}, 'image/jpeg');
 }
 
 function changeChannel(step){

@@ -9,7 +9,7 @@
 		<meta name="keywords" content="RiddlImg, The String Harmony, thestringharmony, image, steg, steganography, riddle, online riddle, capture the flag, CTF">
 		<link rel="stylesheet" type="text/css" href="style.css">
 		<script src="riddlimg.js"></script>
-		<script src="libgif.js"></script>
+		<script src="https://unpkg.com/libgif/libgif.js"></script>
 	</head>
 	<body>
 		<div id="upload">
@@ -21,7 +21,7 @@
 			<p id="msg">Upload an image or enter a URL.</p>
 		</div>
 		<div id="imageArea" class="invisible">
-			<canvas id="image" onclick="lock(event)" onmousemove="updateCoords(event)"></canvas>
+			<canvas id="image" onmousedown="canvasDown(event)" onmousemove="canvasMove(event)" onmouseup="canvasUp()" onmouseleave="canvasUp()" onwheel="zoom(event)"></canvas>
 		</div>
 		<div id="coords" class="invisible">
 			X: <span id="x" class="data">0</span>&nbsp;
@@ -30,6 +30,9 @@
 			R: <span id="r" class="data">0</span>&nbsp;
 			G: <span id="g" class="data">0</span>&nbsp;
 			B: <span id="b" class="data">0</span>&nbsp;
+			<span id="alphaContainer" class="invisible">
+				A: <span id="a" class="data">0</span>&nbsp;
+			</span>
 			#<span id="rgbColor" class="data">000000</span>
 			<span id="inverse" class="invisible">&nbsp;(Inversed)</span>
 		</div>
@@ -93,7 +96,7 @@
 				<input type="button" class="button" value="Extract LSB data" onclick="initLSB()"><br><br>
 				<input type="button" class="button" value="Work with current image" onclick="work()">
 				<input type="button" class="button" value="Reset image" onclick="resetImage()">
-				<input type="button" class="button" value="Save current image" onclick="saveCanvas()">
+				<input type="button" class="button" value="Save current image" onclick="saveImage()">
 			</form>
 		</div>
 		<div id="exifPanel" class="invisible">

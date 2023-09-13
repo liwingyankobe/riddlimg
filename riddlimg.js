@@ -1,7 +1,17 @@
 let rawFile;
 let hiddenFile;
+let imageWidth;
+let imageHeight;
+const maxCanvasWidth = 800;
+const minCanvasWidth = 100;
 let originalImageData;
 let secondImageData;
+let currentImageData;
+let scaleFactor = 1.0;
+let minScaleFactor = 1.0;
+let maxScaleFactor = 20.0;
+let dragStart = [];
+let mouseCoord = [0, 0];
 let locked = false;
 let panelButton = '';
 let channel = 0;
@@ -18,11 +28,14 @@ let framesData = null;
 let frameNo = 0;
 let canvas;
 let ctx;
+const instruction = 'Scroll to zoom. Drag to translate. Click to lock.';
 
 window.onload = () => {
 	document.getElementById('file').value = '';
 	document.getElementById('url').value = '';
 	document.getElementById('contentSave').addEventListener('click', function() {saveFile(content, contentType);});
+	canvas = document.getElementById('image');
+	ctx = canvas.getContext('2d');
 }
 
 function hexToAscii(s) {
@@ -30,6 +43,20 @@ function hexToAscii(s) {
 	for (let i = 0; i < s.length; i += 2)
 		res += String.fromCharCode(parseInt(s.substr(i, 2), 16));
 	return res;
+}
+
+function transformPoint(x, y) {
+	const pt = new DOMPoint(x, y).matrixTransform(ctx.getTransform());
+	return [Math.floor(pt.x), Math.floor(pt.y)];
+}
+
+function inversePoint(x, y) {
+	const pt = new DOMPoint(x, y).matrixTransform(ctx.getTransform().inverse());
+	x = Math.floor(pt.x);
+	y = Math.floor(pt.y);
+	x = x < 0 ? 0 : x >= imageWidth ? imageWidth - 1 : x;
+	y = y < 0 ? 0 : y >= imageHeight ? imageHeight - 1 : y;
+	return [x, y];
 }
 
 function enterURL(event) {
@@ -67,25 +94,41 @@ async function upload(){
 	let img = new Image();
 	img.onload = function() {
 		if (combine) {
-			if (canvas.width != this.width || canvas.height != this.height) {
+			if (imageWidth != this.width || imageHeight != this.height) {
 				message.innerText = 'Not matching image size!';
 				return;
 			}
 			let fakeCanvas = document.createElement('canvas');
-			fakeCanvas.width = this.width;
-			fakeCanvas.height = this.height;
 			let fakeCtx = fakeCanvas.getContext('2d');
+			fakeCanvas.width = imageWidth;
+			fakeCanvas.height = imageHeight;
 			fakeCtx.drawImage(this, 0, 0);
 			secondImageData = fakeCtx.getImageData(0, 0, this.width, this.height);
-			message.innerText = 'Uploaded successfully!';
+			message.innerText = instruction;
 			if (combineMode == -1) combineMode = 0;
 			combineImages(0);
 		} else {
-			canvas = document.getElementById('image');
-			canvas.width = this.width;
-			canvas.height = this.height;
-			ctx = canvas.getContext('2d');
-			ctx.drawImage(this, 0, 0);
+			imageWidth = this.width;
+			imageHeight = this.height;
+			let fakeCanvas = document.createElement('canvas');
+			let fakeCtx = fakeCanvas.getContext('2d');
+			fakeCanvas.width = imageWidth;
+			fakeCanvas.height = imageHeight;
+			fakeCtx.drawImage(this, 0, 0);
+			currentImageData = fakeCtx.getImageData(0, 0, imageWidth, imageHeight);
+			scaleFactor = 1.0;
+			if (imageWidth > maxCanvasWidth)
+				scaleFactor = maxCanvasWidth / imageWidth;
+			else if (imageWidth < minCanvasWidth)
+				scaleFactor = minCanvasWidth / imageWidth;
+			canvas.width = Math.floor(imageWidth * scaleFactor);
+			canvas.height = Math.floor(imageHeight * scaleFactor);
+			ctx.webkitImageSmoothingEnabled = false;
+			ctx.mozImageSmoothingEnabled = false;
+			ctx.imageSmoothingEnabled = false;
+			minScaleFactor = scaleFactor;
+			maxScaleFactor = minScaleFactor > 20.0 ? minScaleFactor: 20.0;
+			ctx.scale(scaleFactor, scaleFactor);
 			rawFile = uploadFile;
 			exif = false;
 			content = null;
@@ -95,7 +138,7 @@ async function upload(){
 			document.getElementById('coords').style.display = 'block';
 			document.getElementById('operations').style.display = 'block';
 			work();
-			message.innerText = 'Uploaded successfully!';
+			message.innerText = instruction;
 		}
 	};
 	img.onerror = function() {
@@ -104,16 +147,82 @@ async function upload(){
 	img.src = URL.createObjectURL(uploadFile);
 }
 
-function updateCoords(event){
+function canvasDown(event) {
+	dragStart = [event.offsetX, event.offsetY];
+	canvas.style.cursor = 'grab';
+}
+
+function canvasMove(event) {
+	if (dragStart.length > 0) {
+		let shiftX = event.offsetX - mouseCoord[0];
+		let shiftY = event.offsetY - mouseCoord[1];
+		mouseCoord = [event.offsetX, event.offsetY];
+		const topLeft = transformPoint(0, 0);
+		const bottomRight = transformPoint(imageWidth, imageHeight);
+		if (topLeft[0] + shiftX > 0 || bottomRight[0] + shiftX < canvas.width)
+			shiftX = 0;
+		if (topLeft[1] + shiftY > 0 || bottomRight[1] + shiftY < canvas.height)
+			shiftY = 0;
+		ctx.translate(shiftX / scaleFactor, shiftY / scaleFactor);
+		draw(currentImageData);
+	} else {
+		mouseCoord = [event.offsetX, event.offsetY];
+		updateCoords();
+	}
+}
+
+function canvasUp() {
+	if (dragStart.length == 0)
+		return;
+	if (dragStart[0] === mouseCoord[0] && dragStart[1] === mouseCoord[1])
+		lock();
+	dragStart = [];
+	canvas.style.cursor = 'crosshair';
+}
+
+function zoom(event) {
+	event.preventDefault();
+	const sensitivity = 0.01;
+	newScaleFactor = scaleFactor - event.deltaY * sensitivity;
+	if (newScaleFactor < minScaleFactor)
+		newScaleFactor = minScaleFactor;
+	else if (newScaleFactor > maxScaleFactor)
+		newScaleFactor = maxScaleFactor;
+	const targetPoint = inversePoint(mouseCoord[0], mouseCoord[1]);
+	ctx.translate(targetPoint[0], targetPoint[1]);
+	ctx.scale(newScaleFactor / scaleFactor, newScaleFactor / scaleFactor);
+	ctx.translate(-targetPoint[0], -targetPoint[1]);
+	scaleFactor = newScaleFactor;
+	const topLeft = transformPoint(0, 0);
+	const bottomRight = transformPoint(imageWidth, imageHeight);
+	let correction = [0, 0];
+	if (topLeft[0] > 0)
+		correction[0] = -topLeft[0];
+	else if (bottomRight[0] < canvas.width)
+		correction[0] = canvas.width - bottomRight[0];
+	if (topLeft[1] > 0)
+		correction[1] = -topLeft[1];
+	else if (bottomRight[1] < canvas.height)
+		correction[1] = canvas.height - bottomRight[1];
+	ctx.translate(correction[0] / scaleFactor, correction[1] / scaleFactor);
+	draw(currentImageData);
+}
+
+function updateCoords(){
 	if (locked) return;
-	document.getElementById('x').innerText = event.offsetX;
-	document.getElementById('y').innerText = event.offsetY;
-	const pixel = ctx.getImageData(event.offsetX, event.offsetY, 1, 1).data;
+	const coord = inversePoint(mouseCoord[0], mouseCoord[1]);
+	document.getElementById('x').innerText = coord[0];
+	document.getElementById('y').innerText = coord[1];
+	let pixel = [];
+	for (let i = 0; i < 4; i++)
+		pixel.push(currentImageData.data[4 * (coord[1] * imageWidth + coord[0]) + i]);
 	document.getElementById('r').innerText = pixel[0];
 	document.getElementById('g').innerText = pixel[1];
 	document.getElementById('b').innerText = pixel[2];
+	document.getElementById('a').innerText = pixel[3];
 	let colorhex = '';
-	for (let i = 0; i < 3; i++){
+	const channelCount = (document.getElementById('alphaContainer').style.display == 'inline') ? 4 : 3;
+	for (let i = 0; i < channelCount; i++){
 		hex = pixel[i].toString(16);
 		if (hex.length == 1)
 			hex = '0' + hex
@@ -126,7 +235,7 @@ function lock(event){
 	if (locked){
 		locked = false;
 		document.getElementById('lock').innerText = '';
-		updateCoords(event);
+		updateCoords();
 	} else {
 		locked = true;
 		document.getElementById('lock').innerHTML = '&nbsp;(Locked)';
@@ -140,7 +249,7 @@ function showPanel(name){
 			document.getElementById(panelButton).style.display = 'none';
 		panelButton = name;
 		document.getElementById(panelButton).style.display = 'block';
-		document.getElementById('msg').innerText = 'Upload an image or enter a URL.';
+		document.getElementById('msg').innerText = instruction;
 	}
 }
 
@@ -148,18 +257,35 @@ function resetImage(){
 	if (combine) switchCombine(false);
 	if (panelButton != '') {
 		document.getElementById(panelButton).style.display = 'none';
-		ctx.putImageData(originalImageData, 0, 0);
 		panelButton = '';
-		document.getElementById('msg').innerText = 'Upload an image or enter a URL.';
+		document.getElementById('msg').innerText = instruction;
 	}
+	currentImageData = originalImageData;
+	draw(originalImageData);
 }
 
 function work(){
-	originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+	originalImageData = currentImageData;
+	if (hasAlphaChannel(originalImageData))
+		document.getElementById('alphaContainer').style.display = 'inline';
+	else
+		document.getElementById('alphaContainer').style.display = 'none';
 	combineMode = -1;
 	lsbData = '';
 	grayScale = [];
 	resetImage();
+}
+
+function draw(imageData) {
+	const topLeft = transformPoint(0, 0);
+	const bottomRight = transformPoint(imageWidth, imageHeight);
+	ctx.clearRect(topLeft[0], topLeft[1], bottomRight[0] - topLeft[0], bottomRight[1] - topLeft[1]);
+	let fakeCanvas = document.createElement('canvas');
+	let fakeCtx = fakeCanvas.getContext('2d');
+	fakeCanvas.width = imageWidth;
+	fakeCanvas.height = imageHeight;
+	fakeCtx.putImageData(imageData, 0, 0);
+	ctx.drawImage(fakeCanvas, 0, 0);
 }
 
 function inverse(){
@@ -168,22 +294,22 @@ function inverse(){
 		if (panelButton != '')
 			document.getElementById(panelButton).style.display = 'none';
 		panelButton = 'inverse';
-		document.getElementById('msg').innerText = 'Upload an image or enter a URL.';
+		document.getElementById('msg').innerText = instruction;
 		document.getElementById(panelButton).style.display = 'inline';
-		let newImageData = structuredClone(originalImageData);
-		let pixels = newImageData.data;
+		currentImageData = structuredClone(originalImageData);
+		let pixels = currentImageData.data;
 		for (let i = 0; i < pixels.length; i++) {
 			if (i % 4 != 3)
 				pixels[i] = 255 - pixels[i];
 		}
-		ctx.putImageData(newImageData, 0, 0);
+		draw(currentImageData);
 	}
 }
 
 function imageSearch(){
 	let fakeCanvas = document.createElement('canvas');
-	fakeCanvas.width = canvas.width;
-	fakeCanvas.height = canvas.height;
+	fakeCanvas.width = imageWidth;
+	fakeCanvas.height = imageHeight;
 	let fakeCtx = fakeCanvas.getContext('2d');
 	fakeCtx.putImageData(originalImageData, 0, 0);
 	fakeCanvas.toBlob((blob) => {
@@ -200,13 +326,13 @@ function changeChannel(step){
 	const channelName = ['Red', 'Green', 'Blue'];
 	channel = (channel + step + 3) % 3;
 	document.getElementById('channel').innerText = channelName[channel];
-	let newImageData = structuredClone(originalImageData);
-	let pixels = newImageData.data;
+	currentImageData = structuredClone(originalImageData);
+	let pixels = currentImageData.data;
 	for (let i = 0; i < pixels.length; i++) {
 		if (i % 4 != 3 && i % 4 != channel)
 			pixels[i] = 0;
 	}
-	ctx.putImageData(newImageData, 0, 0);
+	draw(currentImageData);
 }
 
 function hasAlphaChannel(imageData) {
@@ -222,8 +348,8 @@ function hasAlphaChannel(imageData) {
 function changeBitPlane(channelStep, planeStep){
 	if (channelStep === 0 && planeStep === 0) showPanel('bitPlanePanel');
 
-    const newImageData = structuredClone(originalImageData);
-    const channelCount = hasAlphaChannel(newImageData) ? 5 : 4;
+    currentImageData = structuredClone(originalImageData);
+    const channelCount = (document.getElementById('alphaContainer').style.display == 'inline') ? 5 : 4;
     const channelName = ['Red', 'Green', 'Blue', 'RGB'].concat(channelCount === 5 ? ['Alpha'] : []);
     
     bitPlaneChannel = (bitPlaneChannel + channelStep + channelCount) % channelCount;
@@ -232,7 +358,7 @@ function changeBitPlane(channelStep, planeStep){
     document.getElementById('bitPlaneChannel').innerText = channelName[bitPlaneChannel];
     document.getElementById('bitPlane').innerText = bitPlane.toString();
 	
-	let pixels = newImageData.data;
+	let pixels = currentImageData.data;
 	for (let i = 0; i < pixels.length; i += 4) {
         let bitValue;
         
@@ -253,7 +379,7 @@ function changeBitPlane(channelStep, planeStep){
             pixels[i + 3] = 255;
         }
     }
-	ctx.putImageData(newImageData, 0, 0);
+	draw(currentImageData);
 }
 
 function threshold() {
@@ -265,8 +391,8 @@ function threshold() {
 			grayScale.push(Math.floor(0.299 * pixels[i] + 0.587 * pixels[i+1] + 0.114 * pixels[i+2]));
 	}
 	thresholdValue = parseInt(document.getElementById('thresholdSlider').value);
-	let newImageData = structuredClone(originalImageData);
-	pixels = newImageData.data;
+	currentImageData = structuredClone(originalImageData);
+	pixels = currentImageData.data;
 	for (let i = 0; i < grayScale.length; i++) {
 		if (grayScale[i] >= thresholdValue) {
 			for (let j = 0; j < 3; j++)
@@ -276,7 +402,7 @@ function threshold() {
 				pixels[4 * i + j] = 0;
 		}
 	}
-	ctx.putImageData(newImageData, 0, 0);
+	draw(currentImageData);
 	document.getElementById('thresholdValue').innerText = thresholdValue.toString();
 }
 
@@ -284,13 +410,13 @@ function brightness() {
 	showPanel('brightnessPanel');
 	brightnessValue = parseInt(document.getElementById('brightnessSlider').value);
 	gamma = Math.pow(10, -brightnessValue / 100);
-	let newImageData = structuredClone(originalImageData);
-	let pixels = newImageData.data;
+	currentImageData = structuredClone(originalImageData);
+	let pixels = currentImageData.data;
 	for (let i = 0; i < pixels.length; i++) {
 		if (i % 4 != 3)
 			pixels[i] = Math.round(255 * Math.pow(pixels[i] / 255, gamma));
 	}
-	ctx.putImageData(newImageData, 0, 0);
+	draw(currentImageData);
 	document.getElementById('brightnessValue').innerText = brightnessValue.toString();
 }
 
@@ -302,7 +428,7 @@ function switchCombine(turn) {
 		document.getElementById('msg').innerText = 'Use the above to upload the second image.';
 	} else {
 		combine = false;
-		document.getElementById('msg').innerText = 'Upload an image or enter a URL.';
+		document.getElementById('msg').innerText = instruction;
 	}
 }
 
@@ -311,8 +437,8 @@ function combineImages(step) {
 	const modeName = ['XOR', 'OR', 'AND', 'ADD', 'MIN', 'MAX'];
 	combineMode = (combineMode + step + 6) % 6;
 	document.getElementById('combineMode').innerText = modeName[combineMode];
-	let newImageData = structuredClone(originalImageData);
-	let pixels1 = newImageData.data;
+	currentImageData = structuredClone(originalImageData);
+	let pixels1 = currentImageData.data;
 	let pixels2 = secondImageData.data;
 	for (let i = 0; i < pixels1.length; i++){
 		if (i % 4 == 3) continue;
@@ -340,7 +466,7 @@ function combineImages(step) {
 		}
 		pixels1[i] = value;
 	}
-	ctx.putImageData(newImageData, 0, 0);
+	draw(currentImageData);
 }
 
 function hiddenContent() {
@@ -422,9 +548,14 @@ function saveFile(fileContent, fileExtension) {
 	save.click();
 }
 
-function saveCanvas() {
+function saveImage() {
 	const save = document.getElementById('fileSave');
-	save.href = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+	let fakeCanvas = document.createElement('canvas');
+	let fakeCtx = fakeCanvas.getContext('2d');
+	fakeCanvas.width = imageWidth;
+	fakeCanvas.height = imageHeight;
+	fakeCtx.putImageData(currentImageData, 0, 0);
+	save.href = fakeCanvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
 	save.download = 'edited.png';
 	save.click();
 }
@@ -538,7 +669,7 @@ function viewFrame(step) {
 	let fakeCanvas = framesData.get_canvas();
 	let fakeCtx = fakeCanvas.getContext('2d');
 	const frameImageData = fakeCtx.getImageData(0, 0, fakeCanvas.width, fakeCanvas.height);
-	ctx.putImageData(frameImageData, 0, 0);
+	draw(frameImageData);
 	const frameNoDisplay = frameNo + 1;
 	document.getElementById('frameNo').innerText = frameNoDisplay.toString();
 }

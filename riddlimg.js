@@ -23,6 +23,7 @@ let combineMode = -1;
 let exif = false;
 let content = null;
 let contentType;
+let barcodeData = '';
 let lsbData = '';
 let framesData = null;
 let frameNo = 0;
@@ -276,6 +277,7 @@ function work(){
 	else
 		document.getElementById('alphaContainer').style.display = 'none';
 	combineMode = -1;
+	barcodeData = '';
 	lsbData = '';
 	grayScale = [];
 	resetImage();
@@ -284,7 +286,7 @@ function work(){
 function draw(imageData) {
 	const topLeft = transformPoint(0, 0);
 	const bottomRight = transformPoint(imageWidth, imageHeight);
-	ctx.clearRect(topLeft[0], topLeft[1], bottomRight[0] - topLeft[0], bottomRight[1] - topLeft[1]);
+	ctx.clearRect(-1, -1, imageWidth + 1, imageHeight + 1);
 	let fakeCanvas = document.createElement('canvas');
 	let fakeCtx = fakeCanvas.getContext('2d');
 	fakeCanvas.width = imageWidth;
@@ -337,13 +339,19 @@ function imageSearch(){
 
 function changeChannel(step){
 	if (step == 0) showPanel('channelPanel');
-	const channelName = ['Red', 'Green', 'Blue'];
-	channel = (channel + step + 3) % 3;
+	const channelCount = (document.getElementById('alphaContainer').style.display == 'inline') ? 4 : 3;
+    const channelName = ['Red', 'Green', 'Blue'].concat(channelCount === 4 ? ['Alpha'] : []);
+	channel = (channel + step + channelCount) % channelCount;
 	document.getElementById('channel').innerText = channelName[channel];
 	currentImageData = structuredClone(originalImageData);
 	let pixels = currentImageData.data;
 	for (let i = 0; i < pixels.length; i++) {
-		if (i % 4 != 3 && i % 4 != channel)
+		const remainder = i % 4;
+		if (remainder == 3)
+			pixels[i] = 255;
+		else if (channel == 3)
+			pixels[i] = pixels[i + 3 - remainder];
+		else if (remainder != channel)
 			pixels[i] = 0;
 	}
 	draw(currentImageData);
@@ -711,8 +719,7 @@ function extractLSB() {
 		}
 		checked.push([rgbMap[color], colorChecked]);
 	}
-	const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-	const pixels = imageData.data;
+	const pixels = originalImageData.data;
 	let binary = 0;
 	let count = 7;
 	let start = 0;
@@ -749,7 +756,7 @@ function advancedHelp() {
 	alert('Enter JavaScript expressions to manipulate pixel values in custom ways.\n' +
 	'The results are rounded off to integers between 0 and 255.\n' +
 	'Lock the color picker to execute on one color only.\n' +
-	'Accepted characters: r, g, b, 0-9, +-*/%()=<>!&|^?:');
+	'Allowed characters: r, g, b, 0-9, .+-*/%()=<>!&|^?:');
 }
 
 function executeExpressions() {
@@ -757,7 +764,8 @@ function executeExpressions() {
 	let ex = [];
 	for (let i = 0; i < 3; i++) {
 		ex.push(document.getElementById(rgb[i] + 'Expression').value);
-		if (!/^[0-9rgb+\-*\/%()=<>!&|^?: ]*$/.test(ex[i])) {
+		if (ex[i] === '') ex[i] = rgb[i];
+		if (!/^[0-9rgb.+\-*\/%()=<>!&|^?: ]*$/.test(ex[i])) {
 			document.getElementById('msg').innerText = 'Invalid expressions!';
 			return;
 		}
@@ -803,4 +811,33 @@ function executeExpressions() {
 		currentImageData = structuredClone(backupImageData);
 		draw(currentImageData);
 	}
+}
+
+function initBarcode() {
+	showPanel('barcodePanel');
+	document.getElementById('barcodeContent').innerText = barcodeData;
+}
+
+function barcode() {
+	document.getElementById('msg').innerText = 'Loading...';
+	const barcodeReader = new Html5Qrcode('barcodeReader');
+	let fakeCanvas = document.createElement('canvas');
+	fakeCanvas.width = imageWidth;
+	fakeCanvas.height = imageHeight;
+	let fakeCtx = fakeCanvas.getContext('2d');
+	fakeCtx.putImageData(originalImageData, 0, 0);
+	fakeCanvas.toBlob((blob) => {
+		const barcodeFile = new File([blob], "image.png", {type: "image/png"});
+		barcodeReader.scanFile(barcodeFile, true)
+		.then(decoded => {
+			barcodeData = decoded;
+			document.getElementById('barcodeContent').innerText = barcodeData;
+			document.getElementById('msg').innerText = instruction;
+		})
+		.catch(err => {
+			barcodeData = '';
+			document.getElementById('barcodeContent').innerText = 'Error ' + err;
+			document.getElementById('msg').innerText = instruction;
+		});
+	});
 }

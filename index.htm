@@ -9,7 +9,8 @@
 		<meta name="keywords" content="RiddlImg, The String Harmony, thestringharmony, image, steg, steganography, riddle, online riddle, capture the flag, CTF">
 		<link rel="stylesheet" type="text/css" href="style.css">
 		<script src="riddlimg.js"></script>
-		<script src="https://unpkg.com/libgif/libgif.js"></script>
+		<script src="https://unpkg.com/libgif"></script>
+		<script src="https://unpkg.com/html5-qrcode"></script>
 	</head>
 	<body>
 		<div id="upload">
@@ -83,9 +84,9 @@
 		<div id="advancedPanel" class="invisible">
 			<br>
 			<form>
-				<label for="rExpression"><span class="code">r</span> = </label><input type="text" id="rExpression"><br>
-				<label for="gExpression"><span class="code">g</span> = </label><input type="text" id="gExpression"><br>
-				<label for="bExpression"><span class="code">b</span> = </label><input type="text" id="bExpression"><br><br>
+				<label for="rExpression"><span class="code">R</span> = </label><input type="text" id="rExpression"><br>
+				<label for="gExpression"><span class="code">G</span> = </label><input type="text" id="gExpression"><br>
+				<label for="bExpression"><span class="code">B</span> = </label><input type="text" id="bExpression"><br><br>
 				<input type="button" class="button" value="Execute" onclick="executeExpressions()">
 				<input type="button" class="button" value="Help" onclick="advancedHelp()">
 			</form>
@@ -104,6 +105,7 @@
 				<input type="button" class="button" value="Hidden content" onclick="hiddenContent()">
 				<input type="button" class="button" value="Yandex" onclick="imageSearch()">
 				<input type="button" class="button" value="Combine two images" onclick="switchCombine(true)">
+				<input type="button" class="button" value="Barcode" onclick="initBarcode()">
 				<input type="button" class="button" value="LSB data" onclick="initLSB()"><br><br>
 				<input type="button" class="button" value="Work with current image" onclick="work()">
 				<input type="button" class="button" value="Reset image" onclick="resetImage()">
@@ -123,6 +125,14 @@
 			<p><span id="contentType">Content</span> hidden after the end of image:</p>
 			<textarea id="content" disabled></textarea><br><br>
 			<button class="button" id="contentSave">Save</button>
+		</div>
+		<div id="barcodePanel" class="invisible">
+			<br>
+			<p>Result:</p>
+			<textarea id="barcodeContent" disabled></textarea><br><br>
+			<button class="button" id="barcodeScan" onclick="barcode()">Scan</button>
+			<button class="button" id="barcodeSave" onclick="saveFile(barcodeData, 'txt')">Save</button>
+			<div id="barcodeReader" class="invisible"></div>
 		</div>
 		<div id="lsbPanel" class="invisible">
 			<br>

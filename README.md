@@ -2,6 +2,8 @@
 
 Try now: [https://thestringharmony.com/riddlimg/](https://thestringharmony.com/riddlimg/)
 
+[![WebsiteDemo](demo/demo.png)](https://thestringharmony.com/riddlimg/)
+
 Are you annoyed by using so many apps to check a single image?
 Do you often forget some steps when checking images?
 

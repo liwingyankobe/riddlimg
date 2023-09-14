@@ -17,16 +17,21 @@ such as CTF. Please share this tool to your community if you like it :)
 
 * Import images from uploading or URL
 * View the coordinates and RGB values of pixels
+* Zoom in/out by scrolling and dragging
 * Adjust brightness (gamma correction) and threshold values
 * View color channels and bit planes
 * View frames in GIF images
 	- using the library [libgif-js](https://github.com/buzzfeed/libgif-js)
 * Inverse color
+* Advanced **scripting** on pixel values
 * View EXIF data from `exiftool` (**with a selection of commonly used EXIF tags**)
 	- using the library [PHPExiftool](https://github.com/romainneutron/PHPExiftool)
 * View hidden content after the end of PNG/JPG
-* Shortcut for reverse image search with [Google Lens](https://images.google.com)
+* Shortcut for reverse image search and OCR with [Yandex](https://yandex.com/images/)
 * Combine two images with various blending modes
+* Scan common barcodes
+	- using the library [Html5-QRCode](https://github.com/mebjas/html5-qrcode)
+	- see [here](https://github.com/mebjas/html5-qrcode#supported-code-formats) for supported barcode formats
 * Extract data using LSB steganography
 * Even more features are coming...
 

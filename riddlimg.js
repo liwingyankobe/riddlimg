@@ -1,3 +1,5 @@
+//TO-DO: get rid of global variables, make it more OOP
+//TO-DO: migrate to frameworks like React
 let rawFile;
 let hiddenFile;
 let imageWidth;
@@ -31,6 +33,7 @@ let canvas;
 let ctx;
 const instruction = 'Scroll to zoom. Drag to move. Click to lock.';
 
+//reset upload
 window.onload = () => {
 	document.getElementById('file').value = '';
 	document.getElementById('url').value = '';
@@ -46,11 +49,13 @@ function hexToAscii(s) {
 	return res;
 }
 
+//from image coordinate to canvas coordinate
 function transformPoint(x, y) {
 	const pt = new DOMPoint(x, y).matrixTransform(ctx.getTransform());
 	return [Math.floor(pt.x), Math.floor(pt.y)];
 }
 
+//from canvas coordinate to image coordinate
 function inversePoint(x, y) {
 	const pt = new DOMPoint(x, y).matrixTransform(ctx.getTransform().inverse());
 	x = Math.floor(pt.x);
@@ -67,6 +72,7 @@ function enterURL(event) {
   }
 }
 
+//upload new image from file/URL, or the second image for combining two images
 async function upload(){
 	if (document.getElementById('url').value == '' && document.getElementById('file').value == '')
 		return;
@@ -78,6 +84,7 @@ async function upload(){
 			message.innerText = 'Invalid URL!';
 			return;
 		}
+		//use backend to avoid CORS error
 		let data = new FormData();
 		data.append('url', document.getElementById('url').value);
 		const response = await fetch('download.php', {
@@ -93,6 +100,7 @@ async function upload(){
 		uploadFile = new File([data], 'source', {type: fileType});
 	} else
 		uploadFile = document.getElementById('file').files[0];
+	//size limit 10MB
 	if (uploadFile.size > 10000000) {
 		message.innerText = 'Too large file size!';
 		return;
@@ -100,6 +108,7 @@ async function upload(){
 	let img = new Image();
 	img.onload = function() {
 		if (combine) {
+			//upload the second image for combining
 			if (imageWidth != this.width || imageHeight != this.height) {
 				message.innerText = 'Not matching image size!';
 				return;
@@ -122,6 +131,7 @@ async function upload(){
 			fakeCanvas.height = imageHeight;
 			fakeCtx.drawImage(this, 0, 0);
 			currentImageData = fakeCtx.getImageData(0, 0, imageWidth, imageHeight);
+			//calclate range of scale factor
 			scaleFactor = 1.0;
 			if (imageWidth > maxCanvasWidth)
 				scaleFactor = maxCanvasWidth / imageWidth;
@@ -153,6 +163,7 @@ async function upload(){
 	img.src = URL.createObjectURL(uploadFile);
 }
 
+//move the image when dragging, or update/lock the coordinates
 function canvasDown(event) {
 	dragStart = [event.offsetX, event.offsetY];
 	canvas.style.cursor = 'grab';
@@ -186,6 +197,7 @@ function canvasUp() {
 	canvas.style.cursor = 'crosshair';
 }
 
+//adjust scale factor and position when scrolling
 function zoom(event) {
 	event.preventDefault();
 	const sensitivity = 0.01;
@@ -199,6 +211,7 @@ function zoom(event) {
 	ctx.scale(newScaleFactor / scaleFactor, newScaleFactor / scaleFactor);
 	ctx.translate(-targetPoint[0], -targetPoint[1]);
 	scaleFactor = newScaleFactor;
+	//move to avoid blank space in canvas
 	const topLeft = transformPoint(0, 0);
 	const bottomRight = transformPoint(imageWidth, imageHeight);
 	let correction = [0, 0];
@@ -214,6 +227,7 @@ function zoom(event) {
 	draw(currentImageData);
 }
 
+//update coordinates and color values
 function updateCoords(){
 	if (locked) return;
 	const coord = inversePoint(mouseCoord[0], mouseCoord[1]);
@@ -237,6 +251,7 @@ function updateCoords(){
 	document.getElementById('rgbColor').innerText = colorhex;
 }
 
+//lock coordinates and color values
 function lock(event){
 	if (locked){
 		locked = false;
@@ -248,6 +263,7 @@ function lock(event){
 	}
 }
 
+//show different panels for different functions
 function showPanel(name){
 	if (panelButton != name) {
 		if (combine && name != 'combinePanel') switchCombine(false);
@@ -259,6 +275,7 @@ function showPanel(name){
 	}
 }
 
+//reset canvas to the original image
 function resetImage(){
 	if (combine) switchCombine(false);
 	if (panelButton != '') {
@@ -270,6 +287,7 @@ function resetImage(){
 	draw(originalImageData);
 }
 
+//use canvas image as the original image
 function work(){
 	originalImageData = structuredClone(currentImageData);
 	if (hasAlphaChannel(originalImageData))
@@ -283,6 +301,7 @@ function work(){
 	resetImage();
 }
 
+//draw image data according to the translation and scaling
 function draw(imageData) {
 	const topLeft = transformPoint(0, 0);
 	const bottomRight = transformPoint(imageWidth, imageHeight);
@@ -295,6 +314,7 @@ function draw(imageData) {
 	ctx.drawImage(fakeCanvas, 0, 0);
 }
 
+//inverse all colors (x -> 255 - x)
 function inverse(){
 	if (panelButton != 'inverse') {
 		if (combine) switchCombine(false);
@@ -313,6 +333,7 @@ function inverse(){
 	}
 }
 
+//Yandex image search
 function imageSearch(){
 	document.getElementById('msg').innerText = 'Loading...';
 	let fakeCanvas = document.createElement('canvas');
@@ -337,6 +358,7 @@ function imageSearch(){
 	}, 'image/jpeg');
 }
 
+//view RGB(A) channels
 function changeChannel(step){
 	if (step == 0) showPanel('channelPanel');
 	const channelCount = (document.getElementById('alphaContainer').style.display == 'inline') ? 4 : 3;
@@ -357,6 +379,7 @@ function changeChannel(step){
 	draw(currentImageData);
 }
 
+//check if there is any non-255 alpha value
 function hasAlphaChannel(imageData) {
 	let pixels = imageData.data;
 	for (let i = 3; i < pixels.length; i += 4) {
@@ -367,6 +390,7 @@ function hasAlphaChannel(imageData) {
 	return false;
 }
 
+//view RGB(A) bit planes
 function changeBitPlane(channelStep, planeStep){
 	if (channelStep === 0 && planeStep === 0) showPanel('bitPlanePanel');
 
@@ -404,9 +428,11 @@ function changeBitPlane(channelStep, planeStep){
 	draw(currentImageData);
 }
 
+//adjust threshold value
 function threshold() {
 	let pixels;
 	showPanel('thresholdPanel');
+	//precompute gray scale image
 	if (grayScale.length == 0) {
 		pixels = originalImageData.data;
 		for (let i = 0; i < pixels.length; i += 4)
@@ -428,6 +454,7 @@ function threshold() {
 	document.getElementById('thresholdValue').innerText = thresholdValue.toString();
 }
 
+//adjust brightness using gamma correction
 function brightness() {
 	showPanel('brightnessPanel');
 	brightnessValue = parseInt(document.getElementById('brightnessSlider').value);
@@ -442,6 +469,7 @@ function brightness() {
 	document.getElementById('brightnessValue').innerText = brightnessValue.toString();
 }
 
+//switch on/off function for combining two images
 function switchCombine(turn) {
 	if (turn) {
 		if (combineMode == -1) resetImage();
@@ -454,6 +482,7 @@ function switchCombine(turn) {
 	}
 }
 
+//combine two images with different blending modes
 function combineImages(step) {
 	if (step == 0) showPanel('combinePanel');
 	const modeName = ['XOR', 'OR', 'AND', 'ADD', 'MIN', 'MAX'];
@@ -491,6 +520,7 @@ function combineImages(step) {
 	draw(currentImageData);
 }
 
+//view content after the end of image
 function hiddenContent() {
 	if (content != null) {
 		showPanel('contentPanel');
@@ -499,14 +529,17 @@ function hiddenContent() {
 	const reader = new FileReader();
 	reader.onload = () => {
 		const rawData = reader.result;
+		//detect PNG/JPG from file header
 		if (rawData.substr(0, 8) != hexToAscii('89504e470d0a1a0a') && rawData.substr(0, 2) != hexToAscii('ffd8')) {
 			document.getElementById('msg').innerText = 'This function only supports PNG and JPG!';
 			return;
 		}
+		//traverse till the end of image
 		let start;
 		if (rawData.substr(0, 8) == hexToAscii('89504e470d0a1a0a')) 
 			start = rawData.indexOf(hexToAscii('0000000049454e44ae426082')) + 12;
 		else {
+			//skip incorrect FFD9 using header sizes
 			start = 0;
 			while (rawData[start + 1] != hexToAscii('d9')) {
 				let marker = rawData.charCodeAt(start + 1).toString(16);
@@ -520,6 +553,7 @@ function hiddenContent() {
 		}
 		content = rawData.substr(start);
 		document.getElementById('content').innerText = content;
+		//detect common file format
 		if (content.substr(0, 3) == 'BZh')
 			contentType = 'bz2';
 		else if (content.substr(0, 6) == 'GIF87a' || content.substr(0, 6) == 'GIF89a')
@@ -559,6 +593,7 @@ function hiddenContent() {
 	reader.readAsBinaryString(rawFile);
 }
 
+//save text/binary string for various functions
 function saveFile(fileContent, fileExtension) {
 	let fileArray = new Uint8Array(fileContent.length);
 	for (let i = 0; i < fileContent.length; i++)
@@ -570,6 +605,7 @@ function saveFile(fileContent, fileExtension) {
 	save.click();
 }
 
+//save canvas image as png
 function saveImage() {
 	const save = document.getElementById('fileSave');
 	let fakeCanvas = document.createElement('canvas');
@@ -582,6 +618,7 @@ function saveImage() {
 	save.click();
 }
 
+//view or hide the full EXIF table
 function fullExif(){
 	if (document.getElementById('fullExif').innerText == 'View full EXIF') {
 		document.getElementById('exifTable').style.display = 'block';
@@ -592,6 +629,7 @@ function fullExif(){
 	}
 }
 
+//view EXIF
 function viewExif() {
 	if (exif) {
 		showPanel('exifPanel');
@@ -606,6 +644,7 @@ function viewExif() {
 	})
 	.then((response) => response.json())
 	.then((data) => {
+		//a selection of commonly used EXIF tags
 		const selection = ['FileType', 'ImageWidth', 'ImageHeight', 'ImageDescription', 'ModifyDate',
 			'Artist', 'Copyright', 'DateTimeOriginal', 'CreateDate', 'UserComment', 'OwnerName',
 			'GPSLatitudeRef', 'GPSLatitude', 'GPSLongitudeRef', 'GPSLongitude', 'ObjectName',
@@ -634,6 +673,7 @@ function viewExif() {
 				tag.innerText = entry[0];
 				tag.classList.add('exifItem');
 				value = row.insertCell(1);
+				//display thumbnail image
 				if (entry[0] == 'ThumbnailImage') {
 					let imageArray = new Uint8Array(entry[1].length);
 					for (let i = 0; i < entry[1].length; i++)
@@ -646,6 +686,7 @@ function viewExif() {
 				else if (/^[\u0020-\u007e]*$/.test(entry[1]))
 					value.innerText = entry[1];
 				else {
+					//create link for non-printable ASCII content
 					const blob = new Blob([entry[1]], {type:"text/plain;charset=UTF-8"});
 					let a = document.createElement('a');
 					a.target = '_blank';
@@ -663,6 +704,7 @@ function viewExif() {
 	});
 }
 
+//initialize the GIF frame viewer
 function initFrame() {
 	if (rawFile.type != 'image/gif') {
 		document.getElementById('msg').innerText = 'This function only supports GIF!';
@@ -684,6 +726,7 @@ function initFrame() {
 	}
 }
 
+//view GIF frames one by one
 function viewFrame(step) {
 	const gifLength = framesData.get_length();
 	frameNo = (frameNo + step + gifLength) % gifLength;
@@ -696,11 +739,13 @@ function viewFrame(step) {
 	document.getElementById('frameNo').innerText = frameNoDisplay.toString();
 }
 
+//initialize LSB panel
 function initLSB() {
 	showPanel('lsbPanel');
 	document.getElementById('lsbPreview').innerText = lsbData;
 }
 
+//extract LSB data
 function extractLSB() {
 	lsbData = '';
 	const rgbMap = {'r': 0, 'g': 1, 'b': 2};
@@ -759,9 +804,11 @@ function advancedHelp() {
 	'Allowed characters: r, g, b, 0-9, .+-*/%()=<>!&|^?:');
 }
 
+//scripting for color values
 function executeExpressions() {
 	const rgb = ['r', 'g', 'b'];
 	let ex = [];
+	//check for allowed formulas
 	for (let i = 0; i < 3; i++) {
 		ex.push(document.getElementById(rgb[i] + 'Expression').value);
 		if (ex[i] === '') ex[i] = rgb[i];
@@ -777,10 +824,12 @@ function executeExpressions() {
 		const coord = parseInt(document.getElementById('y').innerText) * imageWidth + 
 			parseInt(document.getElementById('x').innerText);
 		let pixels = currentImageData.data;
+		//create JS functions from formulas
 		for (let i = 0; i < 3; i++) {
 			fn.push(Function('r', 'g', 'b', 'return ' + ex[i]));
 			color.push(pixels[4 * coord + i]);
 		}
+		//compute formulas and cap
 		for (let i = 0; i < pixels.length; i += 4) {
 			if (locked && (pixels[i] !== color[0] || pixels[i+1] !== color[1] || pixels[i+2] !== color[2]))
 				continue;
@@ -818,6 +867,7 @@ function initBarcode() {
 	document.getElementById('barcodeContent').innerText = barcodeData;
 }
 
+//scan common barcodes
 function barcode() {
 	document.getElementById('msg').innerText = 'Loading...';
 	const barcodeReader = new Html5Qrcode('barcodeReader');

@@ -1,5 +1,3 @@
-//TO-DO: get rid of global variables, make it more OOP
-//TO-DO: migrate to frameworks like React
 let rawFile;
 let hiddenFile;
 let imageWidth;
@@ -733,8 +731,8 @@ function viewFrame(step) {
 	framesData.move_to(frameNo);
 	let fakeCanvas = framesData.get_canvas();
 	let fakeCtx = fakeCanvas.getContext('2d');
-	const frameImageData = fakeCtx.getImageData(0, 0, fakeCanvas.width, fakeCanvas.height);
-	draw(frameImageData);
+	currentImageData = fakeCtx.getImageData(0, 0, fakeCanvas.width, fakeCanvas.height);
+	draw(currentImageData);
 	const frameNoDisplay = frameNo + 1;
 	document.getElementById('frameNo').innerText = frameNoDisplay.toString();
 }

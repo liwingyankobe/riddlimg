@@ -331,8 +331,24 @@ function inverse(){
 	}
 }
 
+//Google Lens image search
+function googleLens(){
+	let fakeCanvas = document.createElement('canvas');
+	fakeCanvas.width = canvas.width;
+	fakeCanvas.height = canvas.height;
+	let fakeCtx = fakeCanvas.getContext('2d');
+	fakeCtx.putImageData(originalImageData, 0, 0);
+	fakeCanvas.toBlob((blob) => {
+		const searchFile = new File([blob], "image.png", {type: "image/png"});
+		let container = new DataTransfer(); 
+		container.items.add(searchFile);
+		document.getElementById('googleFile').files = container.files;
+		document.getElementById('googleSearch').submit();
+	});
+}
+
 //Yandex image search
-function imageSearch(){
+function yandex(){
 	document.getElementById('msg').innerText = 'Loading...';
 	let fakeCanvas = document.createElement('canvas');
 	fakeCanvas.width = imageWidth;
@@ -349,8 +365,8 @@ function imageSearch(){
 		})
 		.then((response) => response.text())
 		.then((data) => {
-			document.getElementById('imageSearch').href = data;
-			document.getElementById('imageSearch').click();
+			document.getElementById('yandexSearch').href = data;
+			document.getElementById('yandexSearch').click();
 			document.getElementById('msg').innerText = instruction;
 		});
 	}, 'image/jpeg');

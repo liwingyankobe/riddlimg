@@ -103,7 +103,7 @@
 				<input type="button" class="button" value="Advanced" onclick="initAdvanced()"><br><br>
 				<input type="button" class="button" value="EXIF" onclick="viewExif()">
 				<input type="button" class="button" value="Hidden content" onclick="hiddenContent()">
-				<input type="button" class="button" value="Yandex" onclick="imageSearch()">
+				<input type="button" class="button" value="Image search/OCR" onclick="showPanel('searchPanel')">
 				<input type="button" class="button" value="Combine two images" onclick="switchCombine(true)">
 				<input type="button" class="button" value="Barcode" onclick="initBarcode()">
 				<input type="button" class="button" value="LSB data" onclick="initLSB()"><br><br>
@@ -125,6 +125,11 @@
 			<p><span id="contentType">Content</span> hidden after the end of image:</p>
 			<textarea id="content" disabled></textarea><br><br>
 			<button class="button" id="contentSave">Save</button>
+		</div>
+		<div id="searchPanel" class="invisible">
+			<br><br>
+			<input type="button" class="button" value="Google Lens" onclick="googleLens()">
+			<input type="button" class="button" value="Yandex Images" onclick="yandex()">
 		</div>
 		<div id="barcodePanel" class="invisible">
 			<br>
@@ -202,7 +207,10 @@
 		</div>
 		<br>
 		<a target="_blank" href="https://github.com/liwingyankobe/riddlimg" class="about">About RiddlImg</a>
-		<a id="imageSearch" target="_blank" class="invisible"></a>
+		<form id="googleSearch" class="invisible" target="_blank" action="https://lens.google.com/upload" method="POST" enctype="multipart/form-data">
+			<input type="file" id="googleFile" name="encoded_image">
+		</form>
+		<a id="yandexSearch" target="_blank" class="invisible"></a>
 		<a id="fileSave" class="invisible"></a>
 	</body>
 </html>

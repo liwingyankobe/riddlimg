@@ -876,6 +876,56 @@ function executeExpressions() {
 	}
 }
 
+//assign random color to each pixel color
+function randomColorMap(){
+	const colorMap = new Map();
+	let pixels = currentImageData.data;
+	for (let i = 0; i < pixels.length; i += 4)
+		colorMap.set([pixels[i], pixels[i + 1], pixels[i + 2]].join(','), 0);
+	if (colorMap.size < 10605224) {
+		//algorithm for fewer colors - checking duplicates
+		const randomSet = new Set();
+		for (const [color, val] of colorMap) {
+			let randomColor = Math.floor(Math.random() * 16777216);
+			while (randomSet.has(randomColor))
+				randomColor = Math.floor(Math.random() * 16777216);
+			colorMap.set(color, randomColor);
+			randomSet.add(randomColor);
+		}
+	} else {
+		//algorithm for more colors - precomputing all colors
+		let allColors = Array.from({ length: 16777216 }, (value, index) => index);
+		for (const [color, val] of colorMap) {
+			const randomIndex = Math.floor(Math.random() * allColors.length);
+			colorMap.set(color, allColors[randomIndex]);
+			allColors[randomIndex] = allColors[allColors.length - 1];
+			allColors.pop();
+		}
+	}
+	for (let i = 0; i < pixels.length; i += 4) {
+		let finalColor = colorMap.get([pixels[i], pixels[i + 1], pixels[i + 2]].join(','));
+		for (let j = 0; j < 3; j++) {
+			pixels[i + j] = finalColor % 256;
+			finalColor = Math.floor(finalColor / 256);
+		}
+	}
+	draw(currentImageData);
+	const coord = parseInt(document.getElementById('y').innerText) * imageWidth + 
+		parseInt(document.getElementById('x').innerText);
+	const rgb = ['r', 'g', 'b'];
+	for (let i = 0; i < 3; i++)
+		document.getElementById(rgb[i]).innerText = pixels[4 * coord + i].toString();
+	let colorhex = '';
+	const channelCount = (document.getElementById('alphaContainer').style.display == 'inline') ? 4 : 3;
+	for (let i = 0; i < channelCount; i++){
+		hex = pixels[4 * coord + i].toString(16);
+		if (hex.length == 1)
+			hex = '0' + hex;
+		colorhex = colorhex + hex;
+	}
+	document.getElementById('rgbColor').innerText = colorhex;
+}
+
 function initBarcode() {
 	showPanel('barcodePanel');
 	document.getElementById('barcodeContent').innerText = barcodeData;

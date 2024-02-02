@@ -31,7 +31,7 @@ let canvas;
 let ctx;
 const instruction = 'Scroll to zoom. Drag to move. Click to lock.';
 
-//reset upload
+//initialize page elements when loading
 window.onload = () => {
 	document.getElementById('file').value = '';
 	document.getElementById('url').value = '';
@@ -58,11 +58,13 @@ function inversePoint(x, y) {
 	const pt = new DOMPoint(x, y).matrixTransform(ctx.getTransform().inverse());
 	x = Math.floor(pt.x);
 	y = Math.floor(pt.y);
+	//prevent image coordinates going out of range
 	x = x < 0 ? 0 : x >= imageWidth ? imageWidth - 1 : x;
 	y = y < 0 ? 0 : y >= imageHeight ? imageHeight - 1 : y;
 	return [x, y];
 }
 
+//submit URL by pressing Enter
 function enterURL(event) {
 	if (event.key == "Enter") {
 		event.preventDefault();
@@ -77,12 +79,15 @@ async function upload(){
 	let message = document.getElementById('msg');
 	let uploadFile;
 	message.innerText = 'Loading...';
+
 	if (document.getElementById('url').value != '') {
+		//upload by URL
 		if (!document.getElementById('url').checkValidity()) {
 			message.innerText = 'Invalid URL!';
 			return;
 		}
-		//use backend to avoid CORS error
+
+		//fetch image using PHP backend to avoid CORS error
 		let data = new FormData();
 		data.append('url', document.getElementById('url').value);
 		const response = await fetch('download.php', {
@@ -97,16 +102,19 @@ async function upload(){
 		data = await response.blob();
 		uploadFile = new File([data], 'source', {type: fileType});
 	} else
+		//upload from file
 		uploadFile = document.getElementById('file').files[0];
+
 	//size limit 10MB
 	if (uploadFile.size > 10000000) {
 		message.innerText = 'Too large file size!';
 		return;
 	}
+
 	let img = new Image();
 	img.onload = function() {
 		if (combine) {
-			//upload the second image for combining
+			//upload the second image and combine two images
 			if (imageWidth != this.width || imageHeight != this.height) {
 				message.innerText = 'Not matching image size!';
 				return;
@@ -121,6 +129,7 @@ async function upload(){
 			if (combineMode == -1) combineMode = 0;
 			combineImages(0);
 		} else {
+			//upload single image for manipulation
 			imageWidth = this.width;
 			imageHeight = this.height;
 			let fakeCanvas = document.createElement('canvas');
@@ -129,19 +138,22 @@ async function upload(){
 			fakeCanvas.height = imageHeight;
 			fakeCtx.drawImage(this, 0, 0);
 			currentImageData = fakeCtx.getImageData(0, 0, imageWidth, imageHeight);
+
 			//calclate range of scale factor
 			scaleFactor = 1.0;
 			if (imageWidth > maxCanvasWidth)
 				scaleFactor = maxCanvasWidth / imageWidth;
 			else if (imageWidth < minCanvasWidth)
 				scaleFactor = minCanvasWidth / imageWidth;
+			minScaleFactor = scaleFactor;
+			maxScaleFactor = minScaleFactor > 20.0 ? minScaleFactor: 20.0;
+
+			//initialize canvas and panels
 			canvas.width = Math.floor(imageWidth * scaleFactor);
 			canvas.height = Math.floor(imageHeight * scaleFactor);
 			ctx.webkitImageSmoothingEnabled = false;
 			ctx.mozImageSmoothingEnabled = false;
 			ctx.imageSmoothingEnabled = false;
-			minScaleFactor = scaleFactor;
-			maxScaleFactor = minScaleFactor > 20.0 ? minScaleFactor: 20.0;
 			ctx.scale(scaleFactor, scaleFactor);
 			rawFile = uploadFile;
 			exif = false;
@@ -161,23 +173,28 @@ async function upload(){
 	img.src = URL.createObjectURL(uploadFile);
 }
 
-//move the image when dragging, or update/lock the coordinates
+//start dragging when mouse down
 function canvasDown(event) {
 	dragStart = [event.offsetX, event.offsetY];
 	canvas.style.cursor = 'grab';
 }
 
+//move the image when dragging, or update the coordinates
 function canvasMove(event) {
 	if (dragStart.length > 0) {
+		//move the image
 		let shiftX = event.offsetX - mouseCoord[0];
 		let shiftY = event.offsetY - mouseCoord[1];
 		mouseCoord = [event.offsetX, event.offsetY];
 		const topLeft = transformPoint(0, 0);
 		const bottomRight = transformPoint(imageWidth, imageHeight);
+
+		//prevent image going out of bound
 		if (topLeft[0] + shiftX > 0 || bottomRight[0] + shiftX < canvas.width)
 			shiftX = 0;
 		if (topLeft[1] + shiftY > 0 || bottomRight[1] + shiftY < canvas.height)
 			shiftY = 0;
+
 		ctx.translate(shiftX / scaleFactor, shiftY / scaleFactor);
 		draw(currentImageData);
 	} else {
@@ -186,6 +203,7 @@ function canvasMove(event) {
 	}
 }
 
+//lock the coordinates when mouse up if not moving
 function canvasUp() {
 	if (dragStart.length == 0)
 		return;
@@ -198,18 +216,23 @@ function canvasUp() {
 //adjust scale factor and position when scrolling
 function zoom(event) {
 	event.preventDefault();
+
+	//calculate new scale factor
 	const sensitivity = 0.01;
-	newScaleFactor = scaleFactor - event.deltaY * sensitivity;
+	let newScaleFactor = scaleFactor - event.deltaY * sensitivity;
 	if (newScaleFactor < minScaleFactor)
 		newScaleFactor = minScaleFactor;
 	else if (newScaleFactor > maxScaleFactor)
 		newScaleFactor = maxScaleFactor;
+
+	//scale image about cursor location
 	const targetPoint = inversePoint(mouseCoord[0], mouseCoord[1]);
 	ctx.translate(targetPoint[0], targetPoint[1]);
 	ctx.scale(newScaleFactor / scaleFactor, newScaleFactor / scaleFactor);
 	ctx.translate(-targetPoint[0], -targetPoint[1]);
 	scaleFactor = newScaleFactor;
-	//move to avoid blank space in canvas
+
+	//move image to avoid going out of bound
 	const topLeft = transformPoint(0, 0);
 	const bottomRight = transformPoint(imageWidth, imageHeight);
 	let correction = [0, 0];
@@ -228,9 +251,13 @@ function zoom(event) {
 //update coordinates and color values
 function updateCoords(){
 	if (locked) return;
+
+	//coordinates
 	const coord = inversePoint(mouseCoord[0], mouseCoord[1]);
 	document.getElementById('x').innerText = coord[0];
 	document.getElementById('y').innerText = coord[1];
+
+	//color values
 	let pixel = [];
 	for (let i = 0; i < 4; i++)
 		pixel.push(currentImageData.data[4 * (coord[1] * imageWidth + coord[0]) + i]);
@@ -238,6 +265,8 @@ function updateCoords(){
 	document.getElementById('g').innerText = pixel[1];
 	document.getElementById('b').innerText = pixel[2];
 	document.getElementById('a').innerText = pixel[3];
+
+	//color values to hex
 	let colorhex = '';
 	const channelCount = (document.getElementById('alphaContainer').style.display == 'inline') ? 4 : 3;
 	for (let i = 0; i < channelCount; i++){
@@ -249,7 +278,7 @@ function updateCoords(){
 	document.getElementById('rgbColor').innerText = colorhex;
 }
 
-//lock coordinates and color values
+//switch on/off lock of coordinates and color values
 function lock(event){
 	if (locked){
 		locked = false;
@@ -315,12 +344,15 @@ function draw(imageData) {
 //inverse all colors (x -> 255 - x)
 function inverse(){
 	if (panelButton != 'inverse') {
+		//disable other panels
 		if (combine) switchCombine(false);
 		if (panelButton != '')
 			document.getElementById(panelButton).style.display = 'none';
 		panelButton = 'inverse';
 		document.getElementById('msg').innerText = instruction;
 		document.getElementById(panelButton).style.display = 'inline';
+
+		//compute inversed image
 		currentImageData = structuredClone(originalImageData);
 		let pixels = currentImageData.data;
 		for (let i = 0; i < pixels.length; i++) {
@@ -375,10 +407,14 @@ function yandex(){
 //view RGB(A) channels
 function changeChannel(step){
 	if (step == 0) showPanel('channelPanel');
+
+	//select channel
 	const channelCount = (document.getElementById('alphaContainer').style.display == 'inline') ? 4 : 3;
     const channelName = ['Red', 'Green', 'Blue'].concat(channelCount === 4 ? ['Alpha'] : []);
 	channel = (channel + step + channelCount) % channelCount;
 	document.getElementById('channel').innerText = channelName[channel];
+
+	//compute channel image
 	currentImageData = structuredClone(originalImageData);
 	let pixels = currentImageData.data;
 	for (let i = 0; i < pixels.length; i++) {
@@ -407,35 +443,37 @@ function hasAlphaChannel(imageData) {
 //view RGB(A) bit planes
 function changeBitPlane(channelStep, planeStep){
 	if (channelStep === 0 && planeStep === 0) showPanel('bitPlanePanel');
-
     currentImageData = structuredClone(originalImageData);
+
+	//select bit planes
     const channelCount = (document.getElementById('alphaContainer').style.display == 'inline') ? 5 : 4;
     const channelName = ['Red', 'Green', 'Blue', 'RGB'].concat(channelCount === 5 ? ['Alpha'] : []);
-    
     bitPlaneChannel = (bitPlaneChannel + channelStep + channelCount) % channelCount;
     bitPlane = (bitPlane + planeStep + 8) % 8;
-
-    document.getElementById('bitPlaneChannel').innerText = channelName[bitPlaneChannel];
+	document.getElementById('bitPlaneChannel').innerText = channelName[bitPlaneChannel];
     document.getElementById('bitPlane').innerText = bitPlane.toString();
 	
+	//compute bit plane image
 	let pixels = currentImageData.data;
 	for (let i = 0; i < pixels.length; i += 4) {
         let bitValue;
-        
+        //single RGB channel bit
         if (bitPlaneChannel < 3) {
             bitValue = (pixels[i + bitPlaneChannel] >> bitPlane) & 1;
         }
 
         for (let j = 0; j < 3; j++) {
             if (bitPlaneChannel === 3) {
+				//all of RGB channel bits
                 bitValue = (pixels[i + j] >> bitPlane) & 1;
             } else if (bitPlaneChannel === 4) {
+				//alpha channel bit
                 bitValue = (pixels[i + 3] >> bitPlane) & 1;
             }
+			//output 0 or 255 color values
             pixels[i + j] = bitValue ? 255 : 0;
         }
-
-        if (bitPlaneChannel === 4) {
+		if (bitPlaneChannel === 4) {
             pixels[i + 3] = 255;
         }
     }
@@ -446,12 +484,15 @@ function changeBitPlane(channelStep, planeStep){
 function threshold() {
 	let pixels;
 	showPanel('thresholdPanel');
+
 	//precompute gray scale image
 	if (grayScale.length == 0) {
 		pixels = originalImageData.data;
 		for (let i = 0; i < pixels.length; i += 4)
 			grayScale.push(Math.floor(0.299 * pixels[i] + 0.587 * pixels[i+1] + 0.114 * pixels[i+2]));
 	}
+
+	//compare threshold with gray scale image
 	thresholdValue = parseInt(document.getElementById('thresholdSlider').value);
 	currentImageData = structuredClone(originalImageData);
 	pixels = currentImageData.data;
@@ -471,7 +512,7 @@ function threshold() {
 //adjust brightness using gamma correction
 function brightness() {
 	showPanel('brightnessPanel');
-	brightnessValue = parseInt(document.getElementById('brightnessSlider').value);
+	const brightnessValue = parseInt(document.getElementById('brightnessSlider').value);
 	gamma = Math.pow(10, -brightnessValue / 100);
 	currentImageData = structuredClone(originalImageData);
 	let pixels = currentImageData.data;
@@ -499,9 +540,13 @@ function switchCombine(turn) {
 //combine two images with different blending modes
 function combineImages(step) {
 	if (step == 0) showPanel('combinePanel');
+
+	//select blending mode
 	const modeName = ['XOR', 'OR', 'AND', 'ADD', 'MIN', 'MAX'];
 	combineMode = (combineMode + step + 6) % 6;
 	document.getElementById('combineMode').innerText = modeName[combineMode];
+
+	//compute blending
 	currentImageData = structuredClone(originalImageData);
 	let pixels1 = currentImageData.data;
 	let pixels2 = secondImageData.data;
@@ -509,23 +554,23 @@ function combineImages(step) {
 		if (i % 4 == 3) continue;
 		let value;
 		switch (combineMode) {
-			case 0:
+			case 0:	//xor
 				value = pixels1[i] ^ pixels2[i];
 				break;
-			case 1:
+			case 1:	//or
 				value = pixels1[i] | pixels2[i];
 				break;
-			case 2:
+			case 2:	//and
 				value = pixels1[i] & pixels2[i];
 				break;
-			case 3:
+			case 3:	//add
 				value = pixels1[i] + pixels2[i];
 				if (value > 255) value = 255;
 				break;
-			case 4:
+			case 4:	//min
 				value = Math.min(pixels1[i], pixels2[i]);
 				break;
-			case 5:
+			case 5:	//max
 				value = Math.max(pixels1[i], pixels2[i]);
 				break;
 		}
@@ -548,12 +593,13 @@ function hiddenContent() {
 			document.getElementById('msg').innerText = 'This function only supports PNG and JPG!';
 			return;
 		}
+
 		//traverse till the end of image
 		let start;
 		if (rawData.substr(0, 8) == hexToAscii('89504e470d0a1a0a')) 
 			start = rawData.indexOf(hexToAscii('0000000049454e44ae426082')) + 12;
 		else {
-			//skip incorrect FFD9 using header sizes
+			//skip incorrect FFD9 (end of JPEG) using header sizes
 			start = 0;
 			while (rawData[start + 1] != hexToAscii('d9')) {
 				let marker = rawData.charCodeAt(start + 1).toString(16);
@@ -567,7 +613,8 @@ function hiddenContent() {
 		}
 		content = rawData.substr(start);
 		document.getElementById('content').innerText = content;
-		//detect common file format
+
+		//detect common file format from header
 		if (content.substr(0, 3) == 'BZh')
 			contentType = 'bz2';
 		else if (content.substr(0, 6) == 'GIF87a' || content.substr(0, 6) == 'GIF89a')
@@ -619,7 +666,7 @@ function saveFile(fileContent, fileExtension) {
 	save.click();
 }
 
-//save canvas image as png
+//save canvas image as PNG
 function saveImage() {
 	const save = document.getElementById('fileSave');
 	let fakeCanvas = document.createElement('canvas');
@@ -650,6 +697,8 @@ function viewExif() {
 		return;
 	}
 	document.getElementById('msg').innerText = 'Loading...';
+
+	//apply PHPExifTool
 	let formData = new FormData();
 	formData.append('image[]', rawFile);
 	fetch('exif.php', {
@@ -658,13 +707,15 @@ function viewExif() {
 	})
 	.then((response) => response.json())
 	.then((data) => {
-		//a selection of commonly used EXIF tags
+		//a selection of commonly used EXIF tags in riddles
 		const selection = ['FileType', 'ImageWidth', 'ImageHeight', 'ImageDescription', 'ModifyDate',
 			'Artist', 'Copyright', 'DateTimeOriginal', 'CreateDate', 'UserComment', 'OwnerName',
 			'GPSLatitudeRef', 'GPSLatitude', 'GPSLongitudeRef', 'GPSLongitude', 'ObjectName',
 			'Keywords', 'Headline', 'Caption-Abstract', 'Location', 'Creator', 'Description',
 			'Title', 'Label', 'Rating', 'Comment', 'GPSPosition', 'ThumbnailImage', 'XPAuthor',
 			'XPComment', 'XPKeywords', 'XPSubject', 'XPTitle'];
+
+		//initialize EXIF tables
 		const exifData = Object.entries(data);
 		let potentialTable = document.getElementById('potentialTable');
 		let fullTable = document.getElementById('exifTable');
@@ -675,20 +726,26 @@ function viewExif() {
 		header.colSpan = 2;
 		header.innerText = 'Potentially useful data';
 		row.appendChild(header);
+
+		//go through EXIF groups
 		exifData.forEach((group) => {
+			//create group header
 			row = fullTable.insertRow(-1);
 			let header = document.createElement('th');
 			header.colSpan = 2;
 			header.innerText = group[0];
 			row.appendChild(header);
+
+			//go through EXIF entries in each group
 			Object.entries(group[1]).forEach((entry) => {
 				row = fullTable.insertRow(-1);
 				tag = row.insertCell(0);
 				tag.innerText = entry[0];
 				tag.classList.add('exifItem');
 				value = row.insertCell(1);
-				//display thumbnail image
+
 				if (entry[0] == 'ThumbnailImage') {
+					//display thumbnail image
 					let imageArray = new Uint8Array(entry[1].length);
 					for (let i = 0; i < entry[1].length; i++)
 						imageArray[i] = entry[1].charCodeAt(i);
@@ -697,8 +754,11 @@ function viewExif() {
 					img.src = URL.createObjectURL(blob);
 					value.appendChild(img);
 				}
+
 				else if (/^[\u0020-\u007e]*$/.test(entry[1]))
+					//printable text content
 					value.innerText = entry[1];
+
 				else {
 					//create link for non-printable ASCII content
 					const blob = new Blob([entry[1]], {type:"text/plain;charset=UTF-8"});
@@ -726,6 +786,8 @@ function initFrame() {
 	}
 	if (framesData == null) {
 		document.getElementById('msg').innerText = 'Loading...';
+
+		//load GIF into SuperGif library
 		let img = document.getElementById('gifImage');
 		img.src = URL.createObjectURL(rawFile);
 		framesData = new SuperGif({gif: img});
@@ -742,9 +804,12 @@ function initFrame() {
 
 //view GIF frames one by one
 function viewFrame(step) {
+	//select frame
 	const gifLength = framesData.get_length();
 	frameNo = (frameNo + step + gifLength) % gifLength;
 	framesData.move_to(frameNo);
+
+	//export frame data to canvas
 	let fakeCanvas = framesData.get_canvas();
 	let fakeCtx = fakeCanvas.getContext('2d');
 	currentImageData = fakeCtx.getImageData(0, 0, fakeCanvas.width, fakeCanvas.height);
@@ -762,22 +827,26 @@ function initLSB() {
 //extract LSB data
 function extractLSB() {
 	lsbData = '';
+
+	//collect user options
 	const rgbMap = {'r': 0, 'g': 1, 'b': 2};
 	let checked = [];
-	for (let i = 0; i < 3; i++) {
-		const color = document.getElementById('bitPlaneOrder').value[i];
+	for (let i = 0; i < 3; i++) { //channels
+		const color = document.getElementById('bitPlaneOrder').value[i]; //color order
 		let colorChecked = [];
-		for (let j = 0; j < 8; j++) {
+		for (let j = 0; j < 8; j++) { //bits
 			let digit;
 			if (document.getElementById('bitOrder').value == 'lsb')
-				digit = j;
+				digit = j; //LSB order
 			else
-				digit = 7 - j;
+				digit = 7 - j; //MSB order
 			if (document.getElementById(color + digit.toString()).checked)
 				colorChecked.push(digit);
 		}
 		checked.push([rgbMap[color], colorChecked]);
 	}
+
+	//extract selected bits
 	const pixels = originalImageData.data;
 	let binary = 0;
 	let count = 7;
@@ -795,9 +864,12 @@ function extractLSB() {
 				}
 			}
 		}
+
 		if (document.getElementById('pixelOrder').value == 'row')
+			//row order
 			start += 4;
 		else {
+			//column order
 			start = start + 4 * canvas.width;
 			if (start >= pixels.length)
 				start = start - pixels.length + 4;
@@ -822,6 +894,7 @@ function advancedHelp() {
 function executeExpressions() {
 	const rgb = ['r', 'g', 'b'];
 	let ex = [];
+
 	//check for allowed formulas
 	for (let i = 0; i < 3; i++) {
 		ex.push(document.getElementById(rgb[i] + 'Expression').value);
@@ -831,6 +904,7 @@ function executeExpressions() {
 			return;
 		}
 	}
+
 	const backupImageData = structuredClone(currentImageData);
 	try {
 		let fn = [];
@@ -838,16 +912,20 @@ function executeExpressions() {
 		const coord = parseInt(document.getElementById('y').innerText) * imageWidth + 
 			parseInt(document.getElementById('x').innerText);
 		let pixels = currentImageData.data;
+
 		//create JS functions from formulas
 		for (let i = 0; i < 3; i++) {
 			fn.push(Function('r', 'g', 'b', 'return ' + ex[i]));
 			color.push(pixels[4 * coord + i]);
 		}
-		//compute formulas and cap
+
+		//compute formulas rounded to integer
 		for (let i = 0; i < pixels.length; i += 4) {
 			if (locked && (pixels[i] !== color[0] || pixels[i+1] !== color[1] || pixels[i+2] !== color[2]))
 				continue;
 			let pxval = [];
+
+			//prevent results going beyond 0~255
 			for (let j = 0; j < 3; j++) {
 				let val = Math.round(fn[j](pixels[i], pixels[i+1], pixels[i+2]));
 				val = val < 0 ? 0 : val > 255 ? 255 : val;
@@ -857,6 +935,8 @@ function executeExpressions() {
 				pixels[i+j] = pxval[j];
 		}
 		draw(currentImageData);
+
+		//update color values
 		for (let i = 0; i < 3; i++)
 			document.getElementById(rgb[i]).innerText = pixels[4 * coord + i].toString();
 		let colorhex = '';
@@ -878,10 +958,12 @@ function executeExpressions() {
 
 //assign random color to each pixel color
 function randomColorMap(){
+	//initialize color map
 	const colorMap = new Map();
 	let pixels = currentImageData.data;
 	for (let i = 0; i < pixels.length; i += 4)
 		colorMap.set([pixels[i], pixels[i + 1], pixels[i + 2]].join(','), 0);
+
 	if (colorMap.size < 10605224) {
 		//algorithm for fewer colors - checking duplicates
 		const randomSet = new Set();
@@ -893,15 +975,18 @@ function randomColorMap(){
 			randomSet.add(randomColor);
 		}
 	} else {
-		//algorithm for more colors - precomputing all colors
+		//algorithm for more colors - precomputing all colors and select
 		let allColors = Array.from({ length: 16777216 }, (value, index) => index);
 		for (const [color, val] of colorMap) {
 			const randomIndex = Math.floor(Math.random() * allColors.length);
 			colorMap.set(color, allColors[randomIndex]);
+			//remove assigned color
 			allColors[randomIndex] = allColors[allColors.length - 1];
 			allColors.pop();
 		}
 	}
+
+	//output color map
 	for (let i = 0; i < pixels.length; i += 4) {
 		let finalColor = colorMap.get([pixels[i], pixels[i + 1], pixels[i + 2]].join(','));
 		for (let j = 0; j < 3; j++) {
@@ -910,6 +995,8 @@ function randomColorMap(){
 		}
 	}
 	draw(currentImageData);
+
+	//update color values
 	const coord = parseInt(document.getElementById('y').innerText) * imageWidth + 
 		parseInt(document.getElementById('x').innerText);
 	const rgb = ['r', 'g', 'b'];

@@ -18,6 +18,8 @@ let channel = 0;
 let bitPlaneChannel = 0;
 let bitPlane = 0;
 let grayScale;
+let colorTable = [];
+let hasColorTable = true;
 let combine = false;
 let combineMode = -1;
 let exif = false;
@@ -160,6 +162,9 @@ async function upload(){
 			content = null;
 			framesData = null;
 			frameNo = 0;
+			colorTable = [];
+			hasColorTable = true;
+			document.getElementById('colorTablePanel').style.display = 'none';
 			document.getElementById('imageArea').style.display = 'block';
 			document.getElementById('coords').style.display = 'block';
 			document.getElementById('operations').style.display = 'block';
@@ -208,7 +213,7 @@ function canvasUp() {
 	if (dragStart.length == 0)
 		return;
 	if (dragStart[0] === mouseCoord[0] && dragStart[1] === mouseCoord[1])
-		lock();
+		lockCanvas();
 	dragStart = [];
 	canvas.style.cursor = 'crosshair';
 }
@@ -261,17 +266,23 @@ function updateCoords(){
 }
 
 //update color values
-function updateColors() {
-	const coord = parseInt(document.getElementById('y').innerText) * imageWidth + 
+function updateColors(color = []) {
+	if (color.length === 0) {
+		//read color values from coordinates
+		if (document.getElementById('x').innerText.length === 0) return;
+		const coord = parseInt(document.getElementById('y').innerText) * imageWidth + 
 		parseInt(document.getElementById('x').innerText);
-	const pixels = currentImageData.data;
+		const pixels = currentImageData.data;
+		for (let i = 0; i < 4; i++)
+			color.push(pixels[4 * coord + i]);
+	}
 	const rgba = ['r', 'g', 'b', 'a'];
 	for (let i = 0; i < 4; i++)
-		document.getElementById(rgba[i]).innerText = pixels[4 * coord + i].toString();
+		document.getElementById(rgba[i]).innerText = color[i].toString();
 	let colorhex = '';
 	const channelCount = (document.getElementById('alphaContainer').style.display == 'inline') ? 4 : 3;
 	for (let i = 0; i < channelCount; i++){
-		hex = pixels[4 * coord + i].toString(16);
+		hex = color[i].toString(16);
 		if (hex.length == 1)
 			hex = '0' + hex;
 		colorhex = colorhex + hex;
@@ -280,7 +291,7 @@ function updateColors() {
 }
 
 //switch on/off lock of coordinates and color values
-function lock(event){
+function lockCanvas(){
 	if (locked){
 		locked = false;
 		document.getElementById('lock').innerText = '';
@@ -340,6 +351,145 @@ function draw(imageData) {
 	fakeCanvas.height = imageHeight;
 	fakeCtx.putImageData(imageData, 0, 0);
 	ctx.drawImage(fakeCanvas, 0, 0);
+}
+
+//create color table from file or coordinates
+function createColorTable() {
+	if (colorTable.length === 0) {
+		//create color table array
+		const reader = new FileReader();
+		reader.onload = () => {
+			const rawData = reader.result;
+
+			//detect PNG/GIF from file header
+			if (rawData.substr(0, 8) != hexToAscii('89504e470d0a1a0a') && 
+				rawData.substr(0, 6) != 'GIF87a' && rawData.substr(0, 6) != 'GIF89a') {
+				
+				hasColorTable = false;
+				return;
+			}
+			
+			//search for color table
+			let tableIndex;
+			let tableLen = 0;
+			if (rawData.substr(0, 8) === hexToAscii('89504e470d0a1a0a')) {
+				if (rawData.charCodeAt(25) !== 3) {
+					hasColorTable = false;
+					return;
+				}
+				const headerIndex = rawData.indexOf('PLTE');
+				tableIndex = headerIndex + 4;
+				for (let i = headerIndex - 4; i < headerIndex; i++)
+					tableLen = 256 * tableLen + rawData.charCodeAt(i);
+				tableLen = Math.floor(tableLen / 3);
+			} else {
+				if (rawData.charCodeAt(10) < 128) {
+					hasColorTable = false;
+					return;
+				}
+				tableIndex = 13;
+				tableLen = 1 << (rawData.charCodeAt(10) % 8 + 1);
+			}
+
+			//save color table and corresponding coordinates
+			const colorToIndex = new Map();
+			for (let i = 0; i < tableLen; i++) {
+				const color = [];
+				for (let j = 0; j < 3; j++)
+					color.push(rawData.charCodeAt(tableIndex + j));
+				colorTable.push([color, [-1, -1]]);
+				const colorKey = rawData.substr(tableIndex, 3);
+				if (colorToIndex.has(colorKey))
+					colorToIndex.get(colorKey).push(i);
+				else
+					colorToIndex.set(colorKey, [i]);
+				tableIndex += 3;
+			}
+			const pixels = currentImageData.data;
+			for (let i = 0; i < pixels.length / 4; i++) {
+				let colorKey = '';
+				for (let j = 0; j < 3; j++)
+					colorKey += String.fromCharCode(pixels[4 * i + j]);
+				if (!colorToIndex.has(colorKey))
+					continue;
+				const indices = colorToIndex.get(colorKey);
+				for (let j = 0; j < indices.length; j++)
+					colorTable[indices[j]][1] = [i % imageWidth, Math.floor(i / imageWidth)];
+				colorToIndex.delete(colorKey);
+			}
+
+			drawColorTable();
+		}
+		reader.readAsBinaryString(rawFile);
+	} else {
+		//update color table array
+		const pixels = currentImageData.data;
+		for (let i = 0; i < colorTable.length; i++) {
+			if (colorTable[i][1][0] < 0)
+				continue;
+			const position = colorTable[i][1][1] * imageWidth + colorTable[i][1][0];
+			for (let j = 0; j < 3; j++)
+				colorTable[i][0][j] = pixels[4 * position + j];
+		}
+		drawColorTable();
+	}
+}
+
+//draw color table onto canvas
+function drawColorTable() {
+	let colorTableCanvas = document.getElementById('colorTable');
+	let colorTableCtx = colorTableCanvas.getContext('2d');
+	colorTableCtx.webkitImageSmoothingEnabled = false;
+	colorTableCtx.mozImageSmoothingEnabled = false;
+	colorTableCtx.imageSmoothingEnabled = false;
+	const size = Math.floor(colorTableCanvas.width / 16);
+	colorTableCtx.clearRect(0, 0, 16 * size, 16 * size);
+	for (let i = 0; i < colorTable.length; i++) {
+		colorTableCtx.fillStyle = `rgb(
+			${colorTable[i][0][0]}
+			${colorTable[i][0][1]}
+			${colorTable[i][0][2]}
+			)`;
+		colorTableCtx.fillRect((i % 16) * size, Math.floor(i / 16) * size, size, size);
+	}
+	document.getElementById('colorTablePanel').style.display = 'block';
+}
+
+//switch on/off lock of color values from color table
+function lockColorTable(event) {
+	if (locked) {
+		locked = false;
+		document.getElementById('lock').innerText = '';
+		colorTableMove(event);
+	} else {
+		//allow locking for entries with coordinates only
+		const size = Math.floor(document.getElementById('colorTable').width / 16);
+		const index = Math.floor(event.offsetY / size) * 16 + Math.floor(event.offsetX / size);
+		if (index >= colorTable.length || index < 0)
+			return;
+		if (colorTable[index][1][0] < 0)
+			return;
+		locked = true;
+		document.getElementById('lock').innerHTML = '&nbsp;(Locked)';
+	}
+}
+
+//update color values from color table
+function colorTableMove(event) {
+	if (locked) return;
+	const size = Math.floor(document.getElementById('colorTable').width / 16);
+	const index = Math.floor(event.offsetY / size) * 16 + Math.floor(event.offsetX / size);
+	if (index >= colorTable.length || index < 0)
+		return;
+	if (colorTable[index][1][0] < 0) {
+		document.getElementById('x').innerText = '';
+		document.getElementById('y').innerText = '';
+		updateColors(colorTable[index][0].concat([255]));
+	} else {
+		document.getElementById('x').innerText = colorTable[index][1][0];
+		document.getElementById('y').innerText = colorTable[index][1][1];
+		updateColors();
+	}
 }
 
 //inverse all colors (x -> 255 - x)
@@ -881,6 +1031,8 @@ function extractLSB() {
 
 function initAdvanced() {
 	resetImage();
+	if (hasColorTable)
+		createColorTable();
 	showPanel('advancedPanel');
 }
 
@@ -910,8 +1062,10 @@ function executeExpressions() {
 	try {
 		let fn = [];
 		let color = [];
-		const coord = parseInt(document.getElementById('y').innerText) * imageWidth + 
-			parseInt(document.getElementById('x').innerText);
+		let coord = 0;
+		if (document.getElementById('x').innerText.length > 0)
+			coord = parseInt(document.getElementById('y').innerText) * imageWidth + 
+				parseInt(document.getElementById('x').innerText);
 		let pixels = currentImageData.data;
 
 		//create JS functions from formulas
@@ -937,6 +1091,8 @@ function executeExpressions() {
 		}
 		draw(currentImageData);
 		updateColors();
+		if (hasColorTable)
+			createColorTable();
 		document.getElementById('msg').innerText = instruction;
 	} catch {
 		document.getElementById('msg').innerText = 'Invalid expressions!';
@@ -985,6 +1141,8 @@ function randomColorMap(){
 	}
 	draw(currentImageData);
 	updateColors();
+	if (hasColorTable)
+		createColorTable();
 }
 
 function initBarcode() {

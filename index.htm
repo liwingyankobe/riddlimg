@@ -92,6 +92,11 @@
 				<input type="button" class="button" value="Reset" onclick="initAdvanced()">
 				<input type="button" class="button" value="Help" onclick="advancedHelp()">
 			</form>
+			<br>
+			<div id="colorTablePanel" class="invisible">
+				Color table:<br><br>
+				<canvas id="colorTable" width="256" height="256" class="colorTable" onclick="lockColorTable(event)" onmousemove="colorTableMove(event)"></canvas> 
+			</div>
 		</div>
 		<br>
 		<div id="operations" class="invisible">

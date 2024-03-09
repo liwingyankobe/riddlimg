@@ -257,20 +257,21 @@ function updateCoords(){
 	document.getElementById('x').innerText = coord[0];
 	document.getElementById('y').innerText = coord[1];
 
-	//color values
-	let pixel = [];
-	for (let i = 0; i < 4; i++)
-		pixel.push(currentImageData.data[4 * (coord[1] * imageWidth + coord[0]) + i]);
-	document.getElementById('r').innerText = pixel[0];
-	document.getElementById('g').innerText = pixel[1];
-	document.getElementById('b').innerText = pixel[2];
-	document.getElementById('a').innerText = pixel[3];
+	updateColors();
+}
 
-	//color values to hex
+//update color values
+function updateColors() {
+	const coord = parseInt(document.getElementById('y').innerText) * imageWidth + 
+		parseInt(document.getElementById('x').innerText);
+	const pixels = currentImageData.data;
+	const rgba = ['r', 'g', 'b', 'a'];
+	for (let i = 0; i < 4; i++)
+		document.getElementById(rgba[i]).innerText = pixels[4 * coord + i].toString();
 	let colorhex = '';
 	const channelCount = (document.getElementById('alphaContainer').style.display == 'inline') ? 4 : 3;
 	for (let i = 0; i < channelCount; i++){
-		hex = pixel[i].toString(16);
+		hex = pixels[4 * coord + i].toString(16);
 		if (hex.length == 1)
 			hex = '0' + hex;
 		colorhex = colorhex + hex;
@@ -935,19 +936,7 @@ function executeExpressions() {
 				pixels[i+j] = pxval[j];
 		}
 		draw(currentImageData);
-
-		//update color values
-		for (let i = 0; i < 3; i++)
-			document.getElementById(rgb[i]).innerText = pixels[4 * coord + i].toString();
-		let colorhex = '';
-		const channelCount = (document.getElementById('alphaContainer').style.display == 'inline') ? 4 : 3;
-		for (let i = 0; i < channelCount; i++){
-			hex = pixels[4 * coord + i].toString(16);
-			if (hex.length == 1)
-				hex = '0' + hex;
-			colorhex = colorhex + hex;
-		}
-		document.getElementById('rgbColor').innerText = colorhex;
+		updateColors();
 		document.getElementById('msg').innerText = instruction;
 	} catch {
 		document.getElementById('msg').innerText = 'Invalid expressions!';
@@ -995,22 +984,7 @@ function randomColorMap(){
 		}
 	}
 	draw(currentImageData);
-
-	//update color values
-	const coord = parseInt(document.getElementById('y').innerText) * imageWidth + 
-		parseInt(document.getElementById('x').innerText);
-	const rgb = ['r', 'g', 'b'];
-	for (let i = 0; i < 3; i++)
-		document.getElementById(rgb[i]).innerText = pixels[4 * coord + i].toString();
-	let colorhex = '';
-	const channelCount = (document.getElementById('alphaContainer').style.display == 'inline') ? 4 : 3;
-	for (let i = 0; i < channelCount; i++){
-		hex = pixels[4 * coord + i].toString(16);
-		if (hex.length == 1)
-			hex = '0' + hex;
-		colorhex = colorhex + hex;
-	}
-	document.getElementById('rgbColor').innerText = colorhex;
+	updateColors();
 }
 
 function initBarcode() {

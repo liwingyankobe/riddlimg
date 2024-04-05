@@ -88,21 +88,29 @@ async function upload(){
 			message.innerText = 'Invalid URL!';
 			return;
 		}
-
-		//fetch image using PHP backend to avoid CORS error
-		let data = new FormData();
-		data.append('url', document.getElementById('url').value);
-		const response = await fetch('download.php', {
-			method: 'POST',
-			body: data
-		});
-		if (!response.ok) {
-			message.innerText = 'URL not found!';
-			return;
+		
+		if (document.getElementById('url').value.startsWith('data:image')) {
+			await fetch(document.getElementById('url').value)
+			.then(res => res.blob())
+			.then(blob => uploadFile = blob);
 		}
-		const fileType = response.headers.get('content-type');
-		data = await response.blob();
-		uploadFile = new File([data], 'source', {type: fileType});
+		else {
+			//fetch image using PHP backend to avoid CORS error
+			let data = new FormData();
+			data.append('url', document.getElementById('url').value);
+			const response = await fetch('download.php', {
+				method: 'POST',
+				body: data
+			});
+			
+			if (!response.ok) {
+				message.innerText = 'URL not found!';
+				return;
+			}
+			const fileType = response.headers.get('content-type');
+			data = await response.blob();
+			uploadFile = new File([data], 'source', {type: fileType});
+		}
 	} else
 		//upload from file
 		uploadFile = document.getElementById('file').files[0];

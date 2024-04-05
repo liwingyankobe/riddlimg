@@ -966,7 +966,9 @@ function viewFrame(step) {
 	currentImageData = fakeCtx.getImageData(0, 0, fakeCanvas.width, fakeCanvas.height);
 	draw(currentImageData);
 	const frameNoDisplay = frameNo + 1;
+
 	document.getElementById('frameNo').innerText = frameNoDisplay.toString();
+    document.getElementById('frameDur').innerText = framesData.get_frames()[frameNo].delay * 10 + "ms";
 }
 
 //initialize LSB panel

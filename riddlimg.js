@@ -76,36 +76,52 @@ function enterURL(event) {
 
 //upload new image from file/URL, or the second image for combining two images
 async function upload(){
-	if (document.getElementById('url').value == '' && document.getElementById('file').value == '')
+	const url = document.getElementById('url')
+	const file = document.getElementById('file')
+	
+	if (url.value == '' && file.value == '')
 		return;
 	let message = document.getElementById('msg');
 	let uploadFile;
 	message.innerText = 'Loading...';
 
-	if (document.getElementById('url').value != '') {
+	if (url.value != '') {
 		//upload by URL
-		if (!document.getElementById('url').checkValidity()) {
+		if (!url.checkValidity()) {
 			message.innerText = 'Invalid URL!';
 			return;
 		}
-
-		//fetch image using PHP backend to avoid CORS error
-		let data = new FormData();
-		data.append('url', document.getElementById('url').value);
-		const response = await fetch('download.php', {
-			method: 'POST',
-			body: data
-		});
-		if (!response.ok) {
-			message.innerText = 'URL not found!';
-			return;
+		
+		if (url.value.startsWith('data:image')) {
+			//upload by data URL
+			await fetch(url.value)
+			.then(res => res.blob())
+			.then(blob => {
+				uploadFile = new File([blob], 'source', {
+					type: url.value.split(';')[0].split(':')[1]
+				});
+			});
 		}
-		const fileType = response.headers.get('content-type');
-		data = await response.blob();
-		uploadFile = new File([data], 'source', {type: fileType});
+		else {
+			//fetch image using PHP backend to avoid CORS error
+			let data = new FormData();
+			data.append('url', url.value);
+			const response = await fetch('download.php', {
+				method: 'POST',
+				body: data
+			});
+			
+			if (!response.ok) {
+				message.innerText = 'URL not found!';
+				return;
+			}
+			const fileType = response.headers.get('content-type');
+			data = await response.blob();
+			uploadFile = new File([data], 'source', {type: fileType});
+		}
 	} else
 		//upload from file
-		uploadFile = document.getElementById('file').files[0];
+		uploadFile = file.files[0];
 
 	//size limit 10MB
 	if (uploadFile.size > 10000000) {

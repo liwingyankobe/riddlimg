@@ -178,6 +178,7 @@ async function upload(){
 			content = null;
 			framesData = null;
 			frameNo = 0;
+			document.getElementById('gifContainer').innerHTML = '<img id="gifImage"/>';
 			colorTable = [];
 			hasColorTable = true;
 			document.getElementById('colorTablePanel').style.display = 'none';

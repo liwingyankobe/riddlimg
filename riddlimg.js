@@ -98,7 +98,7 @@ async function upload(){
 			.then(res => res.blob())
 			.then(blob => {
 				uploadFile = new File([blob], 'source', {
-					type: url.value.split(';')[0].split('/')[1]
+					type: url.value.split(';')[0].split(':')[1]
 				});
 			});
 		}

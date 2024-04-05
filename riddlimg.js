@@ -959,16 +959,14 @@ function viewFrame(step) {
 	const gifLength = framesData.get_length();
 	frameNo = (frameNo + step + gifLength) % gifLength;
 	framesData.move_to(frameNo);
-
+	const currentFrame = framesData.get_frames()[frameNo];
+    
 	//export frame data to canvas
-	let fakeCanvas = framesData.get_canvas();
-	let fakeCtx = fakeCanvas.getContext('2d');
-	currentImageData = fakeCtx.getImageData(0, 0, fakeCanvas.width, fakeCanvas.height);
-	draw(currentImageData);
+	draw(currentFrame.data);
+    
 	const frameNoDisplay = frameNo + 1;
-
 	document.getElementById('frameNo').innerText = frameNoDisplay.toString();
-    document.getElementById('frameDur').innerText = framesData.get_frames()[frameNo].delay * 10 + "ms";
+	document.getElementById('frameDur').innerText = currentFrame.delay * 10 + "ms";
 }
 
 //initialize LSB panel

@@ -14,7 +14,7 @@ let dragStart = [];
 let mouseCoord = [0, 0];
 let locked = false;
 let panelButton = '';
-let channel = 0;
+const channels = {'r': true, 'g': true, 'b': true, 'a': true};
 let bitPlaneChannel = 0;
 let bitPlane = 0;
 let grayScale;
@@ -573,27 +573,49 @@ function yandex(){
 }
 
 //view RGB(A) channels
-function changeChannel(step){
-	if (step == 0) showPanel('channelPanel');
+function viewChannels(channel){
 
-	//select channel
-	const channelCount = (document.getElementById('alphaContainer').style.display == 'inline') ? 4 : 3;
-    const channelName = ['Red', 'Green', 'Blue'].concat(channelCount === 4 ? ['Alpha'] : []);
-	channel = (channel + step + channelCount) % channelCount;
-	document.getElementById('channel').innerText = channelName[channel];
+	//show or hide alpha checkbox
+    const wrapper = document.querySelector('#channelPanel .wrapper');
+    const alphaCheckbox = document.getElementById('channelA');
+    const alphaCheckboxLabel = wrapper.querySelector('label[for="channelA"]');
+    if (document.getElementById('alphaContainer').style.display == 'inline') {
+        wrapper.style.setProperty("--columns", 4);
+        alphaCheckbox.style.display = 'block';
+        alphaCheckboxLabel.style.display = 'block';
+    } else {
+        wrapper.style.setProperty("--columns", 3);
+        alphaCheckbox.style.display = 'none';
+        alphaCheckboxLabel.style.display = 'none';
+    }
 
-	//compute channel image
-	currentImageData = structuredClone(originalImageData);
+	//enable or disable channel if chosen
+    if (channel) {
+        channels[channel] = document.getElementById('channel' + channel.toUpperCase()).checked;
+    } else {
+        showPanel('channelPanel');
+    }
+
+    currentImageData = structuredClone(originalImageData);
 	let pixels = currentImageData.data;
-	for (let i = 0; i < pixels.length; i++) {
-		const remainder = i % 4;
-		if (remainder == 3)
-			pixels[i] = 255;
-		else if (channel == 3)
-			pixels[i] = pixels[i + 3 - remainder];
-		else if (remainder != channel)
-			pixels[i] = 0;
-	}
+
+    if (!channels['r'] && !channels['g'] && !channels['b'] && channels['a']) {
+		//only alpha is selected - show alpha as grayscale
+        for (let i = 0; i < pixels.length; i += 4) {
+            pixels[i]     = 255;
+            pixels[i + 1] = 255;
+            pixels[i + 2] = 255;
+        }
+    } else {
+		//show enabled channels without processing
+        for (let i = 0; i < pixels.length; i += 4) {
+            pixels[i]     *= channels['r'] ? 1 : 0;
+            pixels[i + 1] *= channels['g'] ? 1 : 0;
+            pixels[i + 2] *= channels['b'] ? 1 : 0;
+            pixels[i + 3]  = channels['a'] ? pixels[i + 3] : 255;
+        }
+    }
+
 	draw(currentImageData);
 }
 

@@ -237,3 +237,13 @@ a:hover{
     margin-bottom: -11px;
     transform: translateY(-11px);
 }
+
+#channelPanel .wrapper {
+    --columns: 4;
+
+    width: min-content;
+    margin-inline: auto;
+
+    display: grid;
+    grid-template-columns: repeat(var(--columns), 1fr);
+}

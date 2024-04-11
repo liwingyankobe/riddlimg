@@ -53,9 +53,16 @@
 		</div>
 		<div id="channelPanel" class="invisible">
 			<br>
-			<button class="triangle-left" onclick="changeChannel(-1)"></button>
-			<span id="channel" class="dataButton"></span>
-			<button class="triangle-right" onclick="changeChannel(1)"></button>
+            <div class="wrapper">
+                <input type="checkbox" id="channelR" onclick="viewChannels('r')" checked autocomplete="off">
+                <input type="checkbox" id="channelG" onclick="viewChannels('g')" checked autocomplete="off">
+                <input type="checkbox" id="channelB" onclick="viewChannels('b')" checked autocomplete="off">
+                <input type="checkbox" id="channelA" onclick="viewChannels('a')" checked autocomplete="off">
+                <label for="channelR">Red</label>
+                <label for="channelG">Green</label>
+                <label for="channelB">Blue</label>
+                <label for="channelA">Alpha</label>
+            </div>
 		</div>
 		<div id="bitPlanePanel" class="invisible">
 			<br>
@@ -106,7 +113,7 @@
 			<form>
 				<input type="button" class="button" value="Brightness" onclick="brightness()">
 				<input type="button" class="button" value="Threshold" onclick="threshold()">
-				<input type="button" class="button" value="Channels" onclick="changeChannel(0)">
+				<input type="button" class="button" value="Channels" onclick="viewChannels()">
 				<input type="button" class="button" value="Bit planes" onclick="changeBitPlane(0,0)">
 				<input type="button" class="button" value="Frames" onclick="initFrame()">
 				<input type="button" class="button" value="Inverse" onclick="inverse()">

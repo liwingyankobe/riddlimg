@@ -595,15 +595,25 @@ function viewChannels(channel){
         showPanel('channelPanel');
     }
 
-	currentImageData = structuredClone(originalImageData);
+    currentImageData = structuredClone(originalImageData);
 	let pixels = currentImageData.data;
-	for (let i = 0; i < pixels.length; i += 4) {
-        pixels[i]     *= channels['r'] ? 1 : 0;
-        pixels[i + 1] *= channels['g'] ? 1 : 0;
-        pixels[i + 2] *= channels['b'] ? 1 : 0;
-        pixels[i + 3]  = channels['a'] ? pixels[i + 3] : 255;
-	}
-    
+
+    //only alpha selected
+    if (channels['r'] === false && channels['g'] === false && channels['b'] === false && channels['a'] === true) {
+        for (let i = 0; i < pixels.length; i += 4) {
+            pixels[i]     = 255;
+            pixels[i + 1] = 255;
+            pixels[i + 2] = 255;
+        }
+    } else {
+        for (let i = 0; i < pixels.length; i += 4) {
+            pixels[i]     *= channels['r'] ? 1 : 0;
+            pixels[i + 1] *= channels['g'] ? 1 : 0;
+            pixels[i + 2] *= channels['b'] ? 1 : 0;
+            pixels[i + 3]  = channels['a'] ? pixels[i + 3] : 255;
+        }
+    }
+
 	draw(currentImageData);
 }
 

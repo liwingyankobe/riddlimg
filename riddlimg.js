@@ -575,10 +575,10 @@ function yandex(){
 //view RGB(A) channels
 function viewChannels(channel){
 
+	//show or hide alpha checkbox
     const wrapper = document.querySelector('#channelPanel .wrapper');
     const alphaCheckbox = document.getElementById('channelA');
     const alphaCheckboxLabel = wrapper.querySelector('label[for="channelA"]');
-
     if (document.getElementById('alphaContainer').style.display == 'inline') {
         wrapper.style.setProperty("--columns", 4);
         alphaCheckbox.style.display = 'block';
@@ -589,6 +589,7 @@ function viewChannels(channel){
         alphaCheckboxLabel.style.display = 'none';
     }
 
+	//enable or disable channel if chosen
     if (channel) {
         channels[channel] = document.getElementById('channel' + channel.toUpperCase()).checked;
     } else {
@@ -598,14 +599,15 @@ function viewChannels(channel){
     currentImageData = structuredClone(originalImageData);
 	let pixels = currentImageData.data;
 
-    //only alpha selected
-    if (channels['r'] === false && channels['g'] === false && channels['b'] === false && channels['a'] === true) {
+    if (!channels['r'] && !channels['g'] && !channels['b'] && channels['a']) {
+		//only alpha is selected - show alpha as grayscale
         for (let i = 0; i < pixels.length; i += 4) {
             pixels[i]     = 255;
             pixels[i + 1] = 255;
             pixels[i + 2] = 255;
         }
     } else {
+		//show enabled channels without processing
         for (let i = 0; i < pixels.length; i += 4) {
             pixels[i]     *= channels['r'] ? 1 : 0;
             pixels[i + 1] *= channels['g'] ? 1 : 0;

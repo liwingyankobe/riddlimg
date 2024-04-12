@@ -1236,7 +1236,7 @@ function displayColorCounts() {
 	
 	let i = 0;
 	sortedColorCounts.forEach((count, color) => {
-		if (100 <= i++) return; //we only care about the 100 most common colors
+		if (1000 <= i++) return; //we only care about the 1000 most common colors
 		const colorEntry = createColorEntry(color, count);
 		panel.appendChild(colorEntry);
 	});

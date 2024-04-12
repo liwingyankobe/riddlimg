@@ -123,7 +123,8 @@
 				<input type="button" class="button" value="Image search/OCR" onclick="showPanel('searchPanel')">
 				<input type="button" class="button" value="Combine two images" onclick="switchCombine(true)">
 				<input type="button" class="button" value="Barcode" onclick="initBarcode()">
-				<input type="button" class="button" value="LSB data" onclick="initLSB()"><br><br>
+				<input type="button" class="button" value="LSB data" onclick="initLSB()">
+				<input type="button" class="button" value="Color counter" onclick="initColorCounter()"><br><br>
 				<input type="button" class="button" value="Work with current image" onclick="work()">
 				<input type="button" class="button" value="Reset image" onclick="resetImage()">
 				<input type="button" class="button" value="Save current image" onclick="saveImage()">
@@ -222,6 +223,26 @@
 				<input type="button" class="button" value="Save" onclick="saveFile(lsbData, 'txt')">
 			</form>
 		</div>
+		
+		
+		
+		
+		
+		<div id="colorCounterPanel" class="invisible">
+			<br>
+			<p>Preview (100 most common colors only):</p>
+			<div class="colorCounterTable"> 
+			</div><br>
+			<form><br><br>
+				<input type="button" class="button" value="Extract" onclick="displayColorCounts()">
+				<input type="button" class="button" value="Save (all colors)" onclick="saveFile(colorCounterData, 'txt')">
+			</form>
+		</div>
+		
+		
+		
+		
+		
 		<br>
 		<a target="_blank" href="https://github.com/liwingyankobe/riddlimg" class="about">About RiddlImg</a>
 		<form id="googleSearch" class="invisible" target="_blank" action="https://lens.google.com/upload" method="POST" enctype="multipart/form-data">

@@ -27,6 +27,7 @@ let content = null;
 let contentType;
 let barcodeData = '';
 let lsbData = '';
+let colorCounterData = '';
 let framesData = null;
 let frameNo = 0;
 let canvas;
@@ -1212,4 +1213,76 @@ function barcode() {
 			document.getElementById('msg').innerText = instruction;
 		});
 	});
+}
+
+//get color counts per unique color
+function initColorCounter() {
+	showPanel('colorCounterPanel');
+}
+
+function displayColorCounts() {
+	const colorCounts = colorCounter();
+	
+	const sortedColorCounts = new Map([...colorCounts.entries()].sort((a, b) => {
+    if (a[1] < b[1]) return 1;
+    if (a[1] > b[1]) return -1;
+    return 0;
+	}));
+
+	colorCounterData = JSON.stringify([...sortedColorCounts]);
+	
+	const panel = document.querySelector('#colorCounterPanel > div.colorCounterTable');
+	panel.innerHTML = "";
+	
+	let i = 0;
+	sortedColorCounts.forEach((count, color) => {
+		if (100 <= i++) return; //we only care about the 100 most common colors
+		const colorEntry = createColorEntry(color, count);
+		panel.appendChild(colorEntry);
+	});
+}
+
+//create color entry div for the color counter panel
+function createColorEntry(color, count) {
+
+    const colorEntry = document.createElement('div');
+    colorEntry.classList.add('colorEntry');
+
+    const colorSquare = document.createElement('div');
+    colorSquare.classList.add('colorSquare');
+    colorSquare.style.backgroundColor = `rgba(${color})`;
+
+    const colorText = document.createElement('span');
+    colorText.textContent = color;
+
+    const countText = document.createElement('span');
+	countText.classList.add('count');
+    countText.textContent = "Count: " + count;
+
+    colorEntry.appendChild(colorSquare);
+    colorEntry.appendChild(colorText);
+    colorEntry.appendChild(document.createElement('br'));
+    colorEntry.appendChild(countText);
+
+    return colorEntry;
+}
+
+//calculate color counts Map
+function colorCounter() {
+	const pixels = currentImageData.data.reduce((acc, _, i, arr) => {
+    
+		if (i % 4 === 0) {
+			acc.push(arr.slice(i, i + 4).join(", "));
+		}
+		return acc;
+	}, []);
+
+	return pixels.reduce((acc, color) => {
+    
+		acc.set(
+			color, 
+			(acc.get(color) || acc.has(color)) + 1
+		);
+		return acc;
+	}, new Map());
 }

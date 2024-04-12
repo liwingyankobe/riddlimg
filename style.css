@@ -247,3 +247,35 @@ a:hover{
     display: grid;
     grid-template-columns: repeat(var(--columns), 1fr);
 }
+
+
+.colorCounterTable {
+	font-size: 12px;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+}
+      
+.colorCounterTable .colorEntry {
+	white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+	  
+.colorCounterTable .colorEntry span {
+	display: inline-block;
+	width: 8em;
+	text-align: left;
+}
+
+.colorCounterTable .colorEntry .count {
+	margin-left: 35px;
+}
+
+.colorCounterTable .colorEntry .colorSquare {
+	margin-right: 8px;
+	display: inline-block;
+	transform: translateY(22px);
+	width: 24px;
+	height: 24px;
+	border: solid #1f1e33;
+}

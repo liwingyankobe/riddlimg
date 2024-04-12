@@ -15,14 +15,14 @@
 }
 
 body{
-    padding-top:25px;
-    background-color:#000000;
-    color:#ffffff;
-    font-family:"Source Sans Pro",sans-serif;
-    line-height:1.618;
+	padding-top:25px;
+	background-color:#000000;
+	color:#ffffff;
+	font-family:"Source Sans Pro",sans-serif;
+	line-height:1.618;
 	text-align:center;
-    text-rendering:optimizeLegibility;
-    font-weight:400
+	text-rendering:optimizeLegibility;
+	font-weight:400
 }
 
 .invisible{
@@ -217,11 +217,11 @@ th{
 }
 
 a,a:visited{
-    color:#9c96ff;
+	color:#9c96ff;
 }
 
 a:hover{
-    text-decoration:none
+	text-decoration:none
 }
 
 .about{
@@ -229,36 +229,36 @@ a:hover{
 }
 
 #frameData {
-    display: inline-flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+	display: inline-flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
 
-    margin-bottom: -11px;
-    transform: translateY(-11px);
+	margin-bottom: -11px;
+	transform: translateY(-11px);
 }
 
 #channelPanel .wrapper {
-    --columns: 4;
+	--columns: 4;
 
-    width: min-content;
-    margin-inline: auto;
+	width: min-content;
+	margin-inline: auto;
 
-    display: grid;
-    grid-template-columns: repeat(var(--columns), 1fr);
+	display: grid;
+	grid-template-columns: repeat(var(--columns), 1fr);
 }
 
 
 .colorCounterTable {
 	font-size: 12px;
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
+	display: grid;
+	grid-template-columns: repeat(6, 1fr);
 }
-      
+	  
 .colorCounterTable .colorEntry {
 	white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 	  
 .colorCounterTable .colorEntry span {

@@ -53,16 +53,16 @@
 		</div>
 		<div id="channelPanel" class="invisible">
 			<br>
-            <div class="wrapper">
-                <input type="checkbox" id="channelR" onclick="viewChannels('r')" checked autocomplete="off">
-                <input type="checkbox" id="channelG" onclick="viewChannels('g')" checked autocomplete="off">
-                <input type="checkbox" id="channelB" onclick="viewChannels('b')" checked autocomplete="off">
-                <input type="checkbox" id="channelA" onclick="viewChannels('a')" checked autocomplete="off">
-                <label for="channelR">Red</label>
-                <label for="channelG">Green</label>
-                <label for="channelB">Blue</label>
-                <label for="channelA">Alpha</label>
-            </div>
+			<div class="wrapper">
+				<input type="checkbox" id="channelR" onclick="viewChannels('r')" checked autocomplete="off">
+				<input type="checkbox" id="channelG" onclick="viewChannels('g')" checked autocomplete="off">
+				<input type="checkbox" id="channelB" onclick="viewChannels('b')" checked autocomplete="off">
+				<input type="checkbox" id="channelA" onclick="viewChannels('a')" checked autocomplete="off">
+				<label for="channelR">Red</label>
+				<label for="channelG">Green</label>
+				<label for="channelB">Blue</label>
+				<label for="channelA">Alpha</label>
+			</div>
 		</div>
 		<div id="bitPlanePanel" class="invisible">
 			<br>
@@ -82,10 +82,10 @@
 		<div id="framePanel" class="invisible">
 			<br>
 			<button class="triangle-left" onclick="viewFrame(-1)"></button>
-            <div id="frameData">
-                <span id="frameNo" class="data"></span>
-                <span id="frameDur" class="data"></span>
-            </div>
+			<div id="frameData">
+				<span id="frameNo" class="data"></span>
+				<span id="frameDur" class="data"></span>
+			</div>
 			<button class="triangle-right" onclick="viewFrame(1)"></button>
 			<div id="gifContainer" class="invisible">
 				<img id="gifImage"/>
@@ -223,11 +223,6 @@
 				<input type="button" class="button" value="Save" onclick="saveFile(lsbData, 'txt')">
 			</form>
 		</div>
-		
-		
-		
-		
-		
 		<div id="colorCounterPanel" class="invisible">
 			<br>
 			<p>Preview (1000 most common colors only):</p>
@@ -238,11 +233,6 @@
 				<input type="button" class="button" value="Save (all colors)" onclick="saveFile(colorCounterData, 'txt')">
 			</form>
 		</div>
-		
-		
-		
-		
-		
 		<br>
 		<a target="_blank" href="https://github.com/liwingyankobe/riddlimg" class="about">About RiddlImg</a>
 		<form id="googleSearch" class="invisible" target="_blank" action="https://lens.google.com/upload" method="POST" enctype="multipart/form-data">

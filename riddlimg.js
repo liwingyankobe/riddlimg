@@ -103,6 +103,10 @@ async function upload(){
 			});
 		}
 		else {
+			//remove source code mode
+			if (url.value.startsWith('view-source:'))
+				url.value = url.value.slice(12);
+
 			//fetch image using PHP backend to avoid CORS error
 			let data = new FormData();
 			data.append('url', url.value);

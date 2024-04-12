@@ -582,10 +582,12 @@ function viewChannels(channel){
     if (document.getElementById('alphaContainer').style.display == 'inline') {
         wrapper.style.setProperty("--columns", 4);
         alphaCheckbox.style.display = 'block';
+		alphaCheckbox.checked = true;
         alphaCheckboxLabel.style.display = 'block';
     } else {
         wrapper.style.setProperty("--columns", 3);
         alphaCheckbox.style.display = 'none';
+		alphaCheckbox.checked = false;
         alphaCheckboxLabel.style.display = 'none';
     }
 

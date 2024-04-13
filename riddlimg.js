@@ -1248,6 +1248,12 @@ function createColorEntry(color, count) {
 	const colorEntry = document.createElement('div');
 	colorEntry.classList.add('colorEntry');
 
+    colorEntry.addEventListener("click", () => {
+        navigator.clipboard.writeText(color);
+    });
+
+    colorEntry.setAttribute("title", "Click to copy to clipboard!");
+
 	const colorSquare = document.createElement('div');
 	colorSquare.classList.add('colorSquare');
 	colorSquare.style.backgroundColor = `rgba(${color})`;
@@ -1261,7 +1267,6 @@ function createColorEntry(color, count) {
 
 	colorEntry.appendChild(colorSquare);
 	colorEntry.appendChild(colorText);
-	colorEntry.appendChild(document.createElement('br'));
 	colorEntry.appendChild(countText);
 
 	return colorEntry;

@@ -1226,10 +1226,16 @@ function extractColorCounts() {
     displayColorCounts();
 }
 
-function displayColorCounts(reversed=0) {
+function displayColorCounts(reversed=false) {
+    const sortingButton = document.querySelector("#colorCounterPanel .sort");
+    sortingButton.removeAttribute("disabled");
+
+    sortingButton.value = `Sort by: ${reversed ? "High" : "Low"}`;
+    sortingButton.onclick = () => displayColorCounts(reversed ? false : true);
+
 	const sortedColorCounts = new Map([...colorCounts.entries()].sort((a, b) => {
-		if (a[1] < b[1]) return 1;
-		if (a[1] > b[1]) return -1;
+		if (a[1] < b[1]) return reversed ? -1 : 1;
+		if (a[1] > b[1]) return reversed ? 1 : -1;
 		return 0;
 	}));
 

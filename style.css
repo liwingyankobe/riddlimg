@@ -55,7 +55,6 @@ canvas{
 	font-family:"Source Sans Pro",sans-serif;
 	display: inline-block;
 	transition: 0.2s;
-	cursor: pointer;
 }
 
 .button{
@@ -70,8 +69,13 @@ canvas{
 	margin-left: 80px;
 }
 
-.button:hover{
+.button[disabled] {
+    color: gray;
+}
+
+.button:not([disabled]):hover{
 	background-color: #5d5a99;
+    cursor: pointer;
 }
 
 ::file-selector-button, input[type=file], input[type=url], input[type=text]{

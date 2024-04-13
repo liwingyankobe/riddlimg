@@ -224,14 +224,13 @@
 			</form>
 		</div>
 		<div id="colorCounterPanel" class="invisible">
-			<br>
-			<p>Preview (1000 most common colors only):</p>
-			<div class="colorCounterTable"> 
-			</div><br>
-			<form><br><br>
-				<input type="button" class="button" value="Extract" onclick="displayColorCounts()">
+			<br><br>
+            <form>
+                <input type="button" class="button" value="Extract" onclick="extractColorCounts()">
 				<input type="button" class="button" value="Save (all colors)" onclick="saveFile(colorCounterData, 'txt')">
 			</form>
+            <p>Preview (Capped to 1000 colors):</p><br>
+			<div class="colorCounterTable"></div>
 		</div>
 		<br>
 		<a target="_blank" href="https://github.com/liwingyankobe/riddlimg" class="about">About RiddlImg</a>

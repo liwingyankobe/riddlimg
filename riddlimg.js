@@ -27,6 +27,7 @@ let content = null;
 let contentType;
 let barcodeData = '';
 let lsbData = '';
+let colorCounts;
 let colorCounterData = '';
 let framesData = null;
 let frameNo = 0;
@@ -1220,9 +1221,12 @@ function initColorCounter() {
 	showPanel('colorCounterPanel');
 }
 
-function displayColorCounts() {
-	const colorCounts = colorCounter();
-	
+function extractColorCounts() {
+    colorCounts = colorCounter();
+    displayColorCounts();
+}
+
+function displayColorCounts(reversed=0) {
 	const sortedColorCounts = new Map([...colorCounts.entries()].sort((a, b) => {
 		if (a[1] < b[1]) return 1;
 		if (a[1] > b[1]) return -1;

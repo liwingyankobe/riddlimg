@@ -1219,6 +1219,8 @@ function barcode() {
 //get color counts per unique color
 function initColorCounter() {
 	showPanel('colorCounterPanel');
+    const sortingButton = document.querySelector("#colorCounterPanel .sort");
+    sortingButton.setAttribute("disabled", "");
 }
 
 function extractColorCounts() {

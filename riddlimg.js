@@ -1225,29 +1225,30 @@ function initColorCounter() {
 
 function extractColorCounts() {
     colorCounts = colorCounter();
-    displayColorCounts();
+	toggleSortColorCounts(reversed=false);
 }
 
-function displayColorCounts(reversed=false) {
-    const sortingButton = document.querySelector("#colorCounterPanel .sort");
+function toggleSortColorCounts(reversed=false) {
+	const sortingButton = document.querySelector("#colorCounterPanel .sort");
+	
+	sortColorCounts(reversed);
+	
+    sortingButton.value = `Sort by: ${reversed ? "High" : "Low"}`;
+    sortingButton.onclick = () => toggleSortColorCounts(reversed = reversed ? false : true);
+	displayColorCounts();
+}
+
+function displayColorCounts() {
+	const sortingButton = document.querySelector("#colorCounterPanel .sort");
     sortingButton.removeAttribute("disabled");
 
-    sortingButton.value = `Sort by: ${reversed ? "High" : "Low"}`;
-    sortingButton.onclick = () => displayColorCounts(reversed ? false : true);
-
-	const sortedColorCounts = new Map([...colorCounts.entries()].sort((a, b) => {
-		if (a[1] < b[1]) return reversed ? -1 : 1;
-		if (a[1] > b[1]) return reversed ? 1 : -1;
-		return 0;
-	}));
-
-	colorCounterData = JSON.stringify([...sortedColorCounts]);
+	colorCounterData = JSON.stringify([...colorCounts]);
 	
 	const panel = document.querySelector('#colorCounterPanel > div.colorCounterTable');
 	panel.innerHTML = "";
 	
 	let i = 0;
-	sortedColorCounts.forEach((count, color) => {
+	colorCounts.forEach((count, color) => {
 		if (1000 <= i++) return; //we only care about the 1000 most common colors
 		const colorEntry = createColorEntry(color, count);
 		panel.appendChild(colorEntry);
@@ -1282,6 +1283,14 @@ function createColorEntry(color, count) {
 	colorEntry.appendChild(countText);
 
 	return colorEntry;
+}
+
+function sortColorCounts(reversed=false) {
+	colorCounts = new Map([...colorCounts.entries()].sort((a, b) => {
+		if (a[1] < b[1]) return reversed ? -1 : 1;
+		if (a[1] > b[1]) return reversed ? 1 : -1;
+		return 0;
+	}));
 }
 
 //calculate color counts Map

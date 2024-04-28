@@ -808,7 +808,7 @@ function hiddenContent() {
 			start += 2;
 		}
 		content = rawData.substr(start);
-		document.getElementById('content').innerText = content;
+		document.getElementById('content').innerHTML = content;
 
 		//detect common file format from header
 		if (content.substr(0, 3) == 'BZh')
@@ -1192,7 +1192,7 @@ function randomColorMap(){
 
 function initBarcode() {
 	showPanel('barcodePanel');
-	document.getElementById('barcodeContent').innerText = barcodeData;
+	document.getElementById('barcodeContent').innerHTML = barcodeData;
 }
 
 //scan common barcodes
@@ -1209,7 +1209,7 @@ function barcode() {
 		barcodeReader.scanFile(barcodeFile, true)
 		.then(decoded => {
 			barcodeData = decoded;
-			document.getElementById('barcodeContent').innerText = barcodeData;
+			document.getElementById('barcodeContent').innerHTML = barcodeData;
 			document.getElementById('msg').innerText = instruction;
 		})
 		.catch(err => {

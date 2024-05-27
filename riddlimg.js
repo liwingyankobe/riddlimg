@@ -27,6 +27,8 @@ let content = null;
 let contentType;
 let barcodeData = '';
 let lsbData = '';
+let colorCounts = null;
+let colorCounterPage = 1;
 let framesData = null;
 let frameNo = 0;
 let canvas;
@@ -357,6 +359,7 @@ function work(){
 	combineMode = -1;
 	barcodeData = '';
 	lsbData = '';
+	colorCounts = null;
 	grayScale = [];
 	resetImage();
 }
@@ -580,47 +583,47 @@ function yandex(){
 function viewChannels(channel){
 
 	//show or hide alpha checkbox
-    const wrapper = document.querySelector('#channelPanel .wrapper');
-    const alphaCheckbox = document.getElementById('channelA');
-    const alphaCheckboxLabel = wrapper.querySelector('label[for="channelA"]');
-    if (document.getElementById('alphaContainer').style.display == 'inline') {
-        wrapper.style.setProperty("--columns", 4);
-        alphaCheckbox.style.display = 'block';
-        alphaCheckboxLabel.style.display = 'block';
-    } else {
-        wrapper.style.setProperty("--columns", 3);
-        alphaCheckbox.style.display = 'none';
-		alphaCheckbox.checked = false;
-		channels['a'] = false;
-        alphaCheckboxLabel.style.display = 'none';
-    }
+  const wrapper = document.querySelector('#channelPanel .wrapper');
+  const alphaCheckbox = document.getElementById('channelA');
+  const alphaCheckboxLabel = wrapper.querySelector('label[for="channelA"]');
+  if (document.getElementById('alphaContainer').style.display == 'inline') {
+    wrapper.style.setProperty("--columns", 4);
+    alphaCheckbox.style.display = 'block';
+    alphaCheckboxLabel.style.display = 'block';
+  } else {
+    wrapper.style.setProperty("--columns", 3);
+    alphaCheckbox.style.display = 'none';
+    alphaCheckbox.checked = false;
+    channels['a'] = false;
+    alphaCheckboxLabel.style.display = 'none';
+  }
 
 	//enable or disable channel if chosen
-    if (channel) {
-        channels[channel] = document.getElementById('channel' + channel.toUpperCase()).checked;
-    } else {
-        showPanel('channelPanel');
-    }
+	if (channel) {
+		channels[channel] = document.getElementById('channel' + channel.toUpperCase()).checked;
+	} else {
+		showPanel('channelPanel');
+	}
 
-    currentImageData = structuredClone(originalImageData);
+	currentImageData = structuredClone(originalImageData);
 	let pixels = currentImageData.data;
 
-    if (!channels['r'] && !channels['g'] && !channels['b'] && channels['a']) {
+	if (!channels['r'] && !channels['g'] && !channels['b'] && channels['a']) {
 		//only alpha is selected - show alpha as grayscale
-        for (let i = 0; i < pixels.length; i += 4) {
-            pixels[i]     = 255;
-            pixels[i + 1] = 255;
-            pixels[i + 2] = 255;
-        }
-    } else {
+		for (let i = 0; i < pixels.length; i += 4) {
+			pixels[i]	 = 255;
+			pixels[i + 1] = 255;
+			pixels[i + 2] = 255;
+		}
+	} else {
 		//show enabled channels without processing
-        for (let i = 0; i < pixels.length; i += 4) {
-            pixels[i]     *= channels['r'] ? 1 : 0;
-            pixels[i + 1] *= channels['g'] ? 1 : 0;
-            pixels[i + 2] *= channels['b'] ? 1 : 0;
-            pixels[i + 3]  = channels['a'] ? pixels[i + 3] : 255;
-        }
-    }
+		for (let i = 0; i < pixels.length; i += 4) {
+			pixels[i]	 *= channels['r'] ? 1 : 0;
+			pixels[i + 1] *= channels['g'] ? 1 : 0;
+			pixels[i + 2] *= channels['b'] ? 1 : 0;
+			pixels[i + 3]  = channels['a'] ? pixels[i + 3] : 255;
+		}
+	}
 
 	draw(currentImageData);
 }
@@ -639,40 +642,40 @@ function hasAlphaChannel(imageData) {
 //view RGB(A) bit planes
 function changeBitPlane(channelStep, planeStep){
 	if (channelStep === 0 && planeStep === 0) showPanel('bitPlanePanel');
-    currentImageData = structuredClone(originalImageData);
+	currentImageData = structuredClone(originalImageData);
 
 	//select bit planes
-    const channelCount = (document.getElementById('alphaContainer').style.display == 'inline') ? 5 : 4;
-    const channelName = ['Red', 'Green', 'Blue', 'RGB'].concat(channelCount === 5 ? ['Alpha'] : []);
-    bitPlaneChannel = (bitPlaneChannel + channelStep + channelCount) % channelCount;
-    bitPlane = (bitPlane + planeStep + 8) % 8;
+	const channelCount = (document.getElementById('alphaContainer').style.display == 'inline') ? 5 : 4;
+	const channelName = ['Red', 'Green', 'Blue', 'RGB'].concat(channelCount === 5 ? ['Alpha'] : []);
+	bitPlaneChannel = (bitPlaneChannel + channelStep + channelCount) % channelCount;
+	bitPlane = (bitPlane + planeStep + 8) % 8;
 	document.getElementById('bitPlaneChannel').innerText = channelName[bitPlaneChannel];
-    document.getElementById('bitPlane').innerText = bitPlane.toString();
+	document.getElementById('bitPlane').innerText = bitPlane.toString();
 	
 	//compute bit plane image
 	let pixels = currentImageData.data;
 	for (let i = 0; i < pixels.length; i += 4) {
-        let bitValue;
-        //single RGB channel bit
-        if (bitPlaneChannel < 3) {
-            bitValue = (pixels[i + bitPlaneChannel] >> bitPlane) & 1;
-        }
+		let bitValue;
+		//single RGB channel bit
+		if (bitPlaneChannel < 3) {
+			bitValue = (pixels[i + bitPlaneChannel] >> bitPlane) & 1;
+		}
 
-        for (let j = 0; j < 3; j++) {
-            if (bitPlaneChannel === 3) {
+		for (let j = 0; j < 3; j++) {
+			if (bitPlaneChannel === 3) {
 				//all of RGB channel bits
-                bitValue = (pixels[i + j] >> bitPlane) & 1;
-            } else if (bitPlaneChannel === 4) {
+				bitValue = (pixels[i + j] >> bitPlane) & 1;
+			} else if (bitPlaneChannel === 4) {
 				//alpha channel bit
-                bitValue = (pixels[i + 3] >> bitPlane) & 1;
-            }
+				bitValue = (pixels[i + 3] >> bitPlane) & 1;
+			}
 			//output 0 or 255 color values
-            pixels[i + j] = bitValue ? 255 : 0;
-        }
+			pixels[i + j] = bitValue ? 255 : 0;
+		}
 		if (bitPlaneChannel === 4) {
-            pixels[i + 3] = 255;
-        }
-    }
+			pixels[i + 3] = 255;
+		}
+	}
 	draw(currentImageData);
 }
 
@@ -1005,10 +1008,10 @@ function viewFrame(step) {
 	frameNo = (frameNo + step + gifLength) % gifLength;
 	framesData.move_to(frameNo);
 	const currentFrame = framesData.get_frames()[frameNo];
-    
+	
 	//export frame data to canvas
 	draw(currentFrame.data);
-    
+	
 	const frameNoDisplay = frameNo + 1;
 	document.getElementById('frameNo').innerText = frameNoDisplay.toString();
 	document.getElementById('frameDur').innerText = currentFrame.delay * 10 + "ms";
@@ -1218,4 +1221,99 @@ function barcode() {
 			document.getElementById('msg').innerText = instruction;
 		});
 	});
+}
+
+//get color counts per unique color
+function initColorCounter() {
+	resetImage();
+	showPanel('colorCounterPanel');
+	if (colorCounts == null) {
+		document.getElementById('msg').innerText = 'Loading...';
+		calculateColorCounts();
+		toggleSortColorCounts(reversed=false);
+		document.getElementById('msg').innerText = instruction;
+	}
+}
+
+//change sorting order of color counts
+function toggleSortColorCounts(reversed=false) {
+	const sortingButton = document.querySelector("#colorCounterPanel .sort");
+	
+	colorCounts.sort((a, b) => reversed ? a[0] - b[0] : b[0] - a[0]);
+	
+	sortingButton.value = `Sort by: ${reversed ? "High" : "Low"}`;
+	sortingButton.onclick = () => toggleSortColorCounts(reversed = reversed ? false : true);
+	colorCounterPage = 1;
+	showColorCounts(0);
+}
+
+//show current page of color counts
+function showColorCounts(step) {
+	const panel = document.querySelector('#colorCounterPanel > div.colorCounterTable');
+	panel.innerHTML = "";
+
+	const pageSize = 32;
+	if (step == 1 && colorCounterPage < Math.ceil(colorCounts.length / pageSize))
+		colorCounterPage += 1;
+	if (step == -1 && colorCounterPage > 1)
+		colorCounterPage -= 1;
+	document.getElementById('colorCounterPage').innerText = colorCounterPage.toString();
+	
+	const pageStart = pageSize * (colorCounterPage - 1);
+	const pageEnd = Math.min(colorCounts.length, pageSize * colorCounterPage);
+	for (let i = pageStart; i < pageEnd; i++) {
+		const colorEntry = createColorEntry(colorCounts[i][1], colorCounts[i][0]);
+		panel.appendChild(colorEntry);
+	}
+}
+
+//create color entry for the color counter panel
+function createColorEntry(color, count) {
+
+	const colorEntry = document.createElement('div');
+	colorEntry.classList.add('colorEntry');
+
+	const colorSquare = document.createElement('div');
+	colorSquare.classList.add('colorSquare');
+	colorSquare.style.backgroundColor = `rgba(${color})`;
+
+	const colorText = document.createElement('span');
+	colorText.textContent = color;
+
+	let colorhex = '';
+	const colorVals = color.split(', ');
+	for (let i = 0; i < colorVals.length; i++){
+		let hex = parseInt(colorVals[i]).toString(16);
+		if (hex.length == 1)
+			hex = '0' + hex;
+		colorhex = colorhex + hex;
+	}
+	const hexText = document.createElement('span');
+	hexText.textContent = '#' + colorhex;
+
+	const countText = document.createElement('span');
+	countText.classList.add('count');
+	countText.textContent = "Count: " + count;
+
+	colorEntry.appendChild(colorSquare);
+	colorEntry.appendChild(colorText);
+	colorEntry.appendChild(hexText);
+	colorEntry.appendChild(countText);
+
+	return colorEntry;
+}
+
+//calculate color counts array
+function calculateColorCounts() {
+	const pixels = currentImageData.data;
+	const countMap = new Map();
+
+	const channelCount = (document.getElementById('alphaContainer').style.display == 'inline') ? 4 : 3;
+	for (let i = 0; i < pixels.length; i += 4) {
+		const color = pixels.slice(i, i + channelCount).join(', ');
+		countMap.set(color, (countMap.get(color) || countMap.has(color)) + 1);
+	}
+
+	colorCounts = []
+	for (const [color, count] of countMap) colorCounts.push([count, color]);
 }

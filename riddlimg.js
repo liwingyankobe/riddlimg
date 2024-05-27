@@ -105,6 +105,10 @@ async function upload(){
 			});
 		}
 		else {
+			//remove source code mode
+			if (url.value.startsWith('view-source:'))
+				url.value = url.value.slice(12);
+
 			//fetch image using PHP backend to avoid CORS error
 			let data = new FormData();
 			data.append('url', url.value);
@@ -579,18 +583,20 @@ function yandex(){
 function viewChannels(channel){
 
 	//show or hide alpha checkbox
-	const wrapper = document.querySelector('#channelPanel .wrapper');
-	const alphaCheckbox = document.getElementById('channelA');
-	const alphaCheckboxLabel = wrapper.querySelector('label[for="channelA"]');
-	if (document.getElementById('alphaContainer').style.display == 'inline') {
-		wrapper.style.setProperty("--columns", 4);
-		alphaCheckbox.style.display = 'block';
-		alphaCheckboxLabel.style.display = 'block';
-	} else {
-		wrapper.style.setProperty("--columns", 3);
-		alphaCheckbox.style.display = 'none';
-		alphaCheckboxLabel.style.display = 'none';
-	}
+  const wrapper = document.querySelector('#channelPanel .wrapper');
+  const alphaCheckbox = document.getElementById('channelA');
+  const alphaCheckboxLabel = wrapper.querySelector('label[for="channelA"]');
+  if (document.getElementById('alphaContainer').style.display == 'inline') {
+    wrapper.style.setProperty("--columns", 4);
+    alphaCheckbox.style.display = 'block';
+    alphaCheckboxLabel.style.display = 'block';
+  } else {
+    wrapper.style.setProperty("--columns", 3);
+    alphaCheckbox.style.display = 'none';
+    alphaCheckbox.checked = false;
+    channels['a'] = false;
+    alphaCheckboxLabel.style.display = 'none';
+  }
 
 	//enable or disable channel if chosen
 	if (channel) {
@@ -805,7 +811,7 @@ function hiddenContent() {
 			start += 2;
 		}
 		content = rawData.substr(start);
-		document.getElementById('content').innerText = content;
+		document.getElementById('content').innerHTML = content;
 
 		//detect common file format from header
 		if (content.substr(0, 3) == 'BZh')
@@ -1189,7 +1195,7 @@ function randomColorMap(){
 
 function initBarcode() {
 	showPanel('barcodePanel');
-	document.getElementById('barcodeContent').innerText = barcodeData;
+	document.getElementById('barcodeContent').innerHTML = barcodeData;
 }
 
 //scan common barcodes
@@ -1206,7 +1212,7 @@ function barcode() {
 		barcodeReader.scanFile(barcodeFile, true)
 		.then(decoded => {
 			barcodeData = decoded;
-			document.getElementById('barcodeContent').innerText = barcodeData;
+			document.getElementById('barcodeContent').innerHTML = barcodeData;
 			document.getElementById('msg').innerText = instruction;
 		})
 		.catch(err => {

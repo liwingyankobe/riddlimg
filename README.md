@@ -25,6 +25,7 @@ such as CTF. Please share this tool to your community if you like it :)
 * View frames in GIF images
 	- using the library [libgif-js](https://github.com/buzzfeed/libgif-js)
 * Inverse color
+* Pixel color counter
 * Inspect and manipulate color tables
 * Random color map
 * Advanced **scripting** on pixel values

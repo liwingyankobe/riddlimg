@@ -187,7 +187,6 @@ async function upload(){
 			document.getElementById('gifContainer').innerHTML = '<img id="gifImage"/>';
 			colorTable = [];
 			hasColorTable = true;
-			document.getElementById('colorTablePanel').style.display = 'none';
 			document.getElementById('imageArea').style.display = 'block';
 			document.getElementById('coords').style.display = 'block';
 			document.getElementById('operations').style.display = 'block';
@@ -361,6 +360,7 @@ function work(){
 	lsbData = '';
 	colorCounts = null;
 	grayScale = [];
+	if (hasColorTable) createColorTable();
 	resetImage();
 }
 
@@ -384,12 +384,14 @@ function createColorTable() {
 		const reader = new FileReader();
 		reader.onload = () => {
 			const rawData = reader.result;
+			const colorButton = document.getElementById('colorPanelButton');
 
 			//detect PNG/GIF from file header
 			if (rawData.substr(0, 8) != hexToAscii('89504e470d0a1a0a') && 
 				rawData.substr(0, 6) != 'GIF87a' && rawData.substr(0, 6) != 'GIF89a') {
 				
 				hasColorTable = false;
+				colorButton.value = 'Color counts';
 				return;
 			}
 			
@@ -399,6 +401,7 @@ function createColorTable() {
 			if (rawData.substr(0, 8) === hexToAscii('89504e470d0a1a0a')) {
 				if (rawData.charCodeAt(25) !== 3) {
 					hasColorTable = false;
+					colorButton.value = 'Color counts';
 					return;
 				}
 				const headerIndex = rawData.indexOf('PLTE');
@@ -409,6 +412,7 @@ function createColorTable() {
 			} else {
 				if (rawData.charCodeAt(10) < 128) {
 					hasColorTable = false;
+					colorButton.value = 'Color counts';
 					return;
 				}
 				tableIndex = 13;
@@ -441,8 +445,10 @@ function createColorTable() {
 					colorTable[indices[j]][1] = [i % imageWidth, Math.floor(i / imageWidth)];
 				colorToIndex.delete(colorKey);
 			}
-
+			
+			//update UI
 			drawColorTable();
+			colorButton.value = 'Color table';
 		}
 		reader.readAsBinaryString(rawFile);
 	} else {
@@ -476,7 +482,6 @@ function drawColorTable() {
 			)`;
 		colorTableCtx.fillRect((i % 16) * size, Math.floor(i / 16) * size, size, size);
 	}
-	document.getElementById('colorTablePanel').style.display = 'block';
 }
 
 //switch on/off lock of color values from color table
@@ -1079,8 +1084,6 @@ function extractLSB() {
 
 function initAdvanced() {
 	resetImage();
-	if (hasColorTable)
-		createColorTable();
 	showPanel('advancedPanel');
 }
 
@@ -1139,8 +1142,6 @@ function executeExpressions() {
 		}
 		draw(currentImageData);
 		updateColors();
-		if (hasColorTable)
-			createColorTable();
 		document.getElementById('msg').innerText = instruction;
 	} catch {
 		document.getElementById('msg').innerText = 'Invalid expressions!';
@@ -1189,8 +1190,6 @@ function randomColorMap(){
 	}
 	draw(currentImageData);
 	updateColors();
-	if (hasColorTable)
-		createColorTable();
 }
 
 function initBarcode() {
@@ -1223,16 +1222,25 @@ function barcode() {
 	});
 }
 
-//get color counts per unique color
-function initColorCounter() {
+function toggleColorPanelButton() {
 	resetImage();
-	showPanel('colorCounterPanel');
-	if (colorCounts == null) {
-		document.getElementById('msg').innerText = 'Loading...';
-		calculateColorCounts();
-		toggleSortColorCounts(reversed=false);
-		document.getElementById('msg').innerText = instruction;
+	let isColorCounter = true;
+	if (hasColorTable) {
+		const colorButton = document.getElementById('colorPanelButton');
+		if (colorButton.value == 'Color table') {
+			isColorCounter = false;
+			colorButton.value = 'Color counts';
+		} else colorButton.value = 'Color table';
 	}
+	if (isColorCounter) {
+		showPanel('colorCounterPanel');
+		if (colorCounts == null) {
+			document.getElementById('msg').innerText = 'Loading...';
+			calculateColorCounts();
+			toggleSortColorCounts(reversed=false);
+			document.getElementById('msg').innerText = instruction;
+		}
+	} else showPanel('colorTablePanel');
 }
 
 //change sorting order of color counts

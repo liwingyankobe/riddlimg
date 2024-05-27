@@ -91,6 +91,20 @@
 				<img id="gifImage"/>
 			</div>
 		</div>
+		<div id="colorCounterPanel" class="invisible">
+			<br>
+			<p id="counterMsg">Color counts:</p><br>
+			<div class="colorCounterTable"></div><br><br>
+			<button class="triangle-left" onclick="showColorCounts(-1)"></button>
+			<span id="colorCounterPage" class="dataButton"></span>
+			<button class="triangle-right" onclick="showColorCounts(1)"></button><br><br>
+			<input type="button" class="sort button" value="Sort by: Low" onclick="toggleSortColorCounts(reversed=true)">
+		</div>
+		<div id="colorTablePanel" class="invisible">
+			<br>
+			Color table:<br><br>
+			<canvas id="colorTable" width="256" height="256" class="colorTable" onclick="lockColorTable(event)" onmousemove="colorTableMove(event)"></canvas> 
+		</div>
 		<div id="advancedPanel" class="invisible">
 			<br>
 			<form>
@@ -102,11 +116,6 @@
 				<input type="button" class="button" value="Reset" onclick="initAdvanced()">
 				<input type="button" class="button" value="Help" onclick="advancedHelp()">
 			</form>
-			<br>
-			<div id="colorTablePanel" class="invisible">
-				Color table:<br><br>
-				<canvas id="colorTable" width="256" height="256" class="colorTable" onclick="lockColorTable(event)" onmousemove="colorTableMove(event)"></canvas> 
-			</div>
 		</div>
 		<br>
 		<div id="operations" class="invisible">
@@ -117,7 +126,7 @@
 				<input type="button" class="button" value="Bit planes" onclick="changeBitPlane(0,0)">
 				<input type="button" class="button" value="Frames" onclick="initFrame()">
 				<input type="button" class="button" value="Inverse" onclick="inverse()">
-				<input type="button" class="button" value="Color counts" onclick="initColorCounter()">
+				<input type="button" class="button" id="colorPanelButton" value="Color counts" onclick="toggleColorPanelButton()">
 				<input type="button" class="button" value="Advanced" onclick="initAdvanced()"><br><br>
 				<input type="button" class="button" value="EXIF" onclick="viewExif()">
 				<input type="button" class="button" value="Hidden content" onclick="hiddenContent()">
@@ -222,15 +231,6 @@
 				<input type="button" class="button" value="Extract" onclick="extractLSB()">
 				<input type="button" class="button" value="Save" onclick="saveFile(lsbData, 'txt')">
 			</form>
-		</div>
-		<div id="colorCounterPanel" class="invisible">
-			<br>
-			<p id="counterMsg">Color counts:</p><br>
-			<div class="colorCounterTable"></div><br><br>
-			<button class="triangle-left" onclick="showColorCounts(-1)"></button>
-			<span id="colorCounterPage" class="dataButton"></span>
-			<button class="triangle-right" onclick="showColorCounts(1)"></button><br><br>
-			<input type="button" class="sort button" value="Sort by: Low" onclick="toggleSortColorCounts(reversed=true)">
 		</div>
 		<br>
 		<a target="_blank" href="https://github.com/liwingyankobe/riddlimg" class="about">About RiddlImg</a>

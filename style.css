@@ -55,6 +55,7 @@ canvas{
 	font-family:"Source Sans Pro",sans-serif;
 	display: inline-block;
 	transition: 0.2s;
+	cursor: pointer;
 }
 
 .button{
@@ -69,13 +70,8 @@ canvas{
 	margin-left: 80px;
 }
 
-.button[disabled] {
-    color: gray;
-}
-
-.button:not([disabled]):hover{
+.button:hover{
 	background-color: #5d5a99;
-    cursor: pointer;
 }
 
 ::file-selector-button, input[type=file], input[type=url], input[type=text]{
@@ -253,32 +249,31 @@ a:hover{
 }
 
 .colorCounterTable {
-    max-width: 730px;
-    margin-inline: auto;
+	max-width: 730px;
+	margin-inline: auto;
 
 	display: grid;
 	grid-template-columns: repeat(auto-fill, 150px);
-    justify-content: center;
-    row-gap: 0.5rem;
+	justify-content: center;
+	row-gap: 0.5rem;
 
 	font-size: 12px;
 }
 
 .colorCounterTable .colorEntry {
-    height: 40px;
+	height: 60px;
 
-    display: grid;
-    grid-template-columns: min-content 1fr;
-    grid-template-rows: 1fr 1fr;
-    justify-content: left;
-    column-gap: 0.5rem;
+	display: grid;
+	grid-template-columns: min-content 1fr;
+	grid-template-rows: 1fr 1fr;
+	justify-content: left;
+	column-gap: 0.5rem;
 
-    text-align: left;
-    cursor: pointer;
+	text-align: left;
 }
 
 .colorCounterTable .colorEntry .colorSquare {
 	border: solid 2px #1f1e33;
-    grid-row: span 2;
-    width: 40px;
+	grid-row: span 3;
+	width: 40px;
 }

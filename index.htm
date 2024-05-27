@@ -117,14 +117,14 @@
 				<input type="button" class="button" value="Bit planes" onclick="changeBitPlane(0,0)">
 				<input type="button" class="button" value="Frames" onclick="initFrame()">
 				<input type="button" class="button" value="Inverse" onclick="inverse()">
+				<input type="button" class="button" value="Color counts" onclick="initColorCounter()">
 				<input type="button" class="button" value="Advanced" onclick="initAdvanced()"><br><br>
 				<input type="button" class="button" value="EXIF" onclick="viewExif()">
 				<input type="button" class="button" value="Hidden content" onclick="hiddenContent()">
 				<input type="button" class="button" value="Image search/OCR" onclick="showPanel('searchPanel')">
 				<input type="button" class="button" value="Combine two images" onclick="switchCombine(true)">
 				<input type="button" class="button" value="Barcode" onclick="initBarcode()">
-				<input type="button" class="button" value="LSB data" onclick="initLSB()">
-				<input type="button" class="button" value="Color counter" onclick="initColorCounter()"><br><br>
+				<input type="button" class="button" value="LSB data" onclick="initLSB()"><br><br>
 				<input type="button" class="button" value="Work with current image" onclick="work()">
 				<input type="button" class="button" value="Reset image" onclick="resetImage()">
 				<input type="button" class="button" value="Save current image" onclick="saveImage()">
@@ -224,14 +224,13 @@
 			</form>
 		</div>
 		<div id="colorCounterPanel" class="invisible">
-			<br><br>
-            <form>
-                <input type="button" class="button" value="Extract" onclick="extractColorCounts()">
-				<input type="button" class="button" value="Save (all colors)" onclick="saveFile(colorCounterData, 'txt')">
-                <input type="button" class="sort button" value="Sort by: Low" onclick="toggleSortColorCounts(reversed=true)" disabled>
-			</form>
-            <p>Preview (Capped to 1000 colors):</p><br>
-			<div class="colorCounterTable"></div>
+			<br>
+			<p id="counterMsg">Color counts:</p><br>
+			<div class="colorCounterTable"></div><br><br>
+			<button class="triangle-left" onclick="showColorCounts(-1)"></button>
+			<span id="colorCounterPage" class="dataButton"></span>
+			<button class="triangle-right" onclick="showColorCounts(1)"></button><br><br>
+			<input type="button" class="sort button" value="Sort by: Low" onclick="toggleSortColorCounts(reversed=true)">
 		</div>
 		<br>
 		<a target="_blank" href="https://github.com/liwingyankobe/riddlimg" class="about">About RiddlImg</a>

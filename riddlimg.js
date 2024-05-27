@@ -27,8 +27,8 @@ let content = null;
 let contentType;
 let barcodeData = '';
 let lsbData = '';
-let colorCounts;
-let colorCounterData = '';
+let colorCounts = null;
+let colorCounterPage = 1;
 let framesData = null;
 let frameNo = 0;
 let canvas;
@@ -355,6 +355,7 @@ function work(){
 	combineMode = -1;
 	barcodeData = '';
 	lsbData = '';
+	colorCounts = null;
 	grayScale = [];
 	resetImage();
 }
@@ -1218,54 +1219,53 @@ function barcode() {
 
 //get color counts per unique color
 function initColorCounter() {
+	resetImage();
 	showPanel('colorCounterPanel');
-    const sortingButton = document.querySelector("#colorCounterPanel .sort");
-    sortingButton.setAttribute("disabled", "");
+	if (colorCounts == null) {
+		document.getElementById('msg').innerText = 'Loading...';
+		calculateColorCounts();
+		toggleSortColorCounts(reversed=false);
+		document.getElementById('msg').innerText = instruction;
+	}
 }
 
-function extractColorCounts() {
-    colorCounts = colorCounter();
-	toggleSortColorCounts(reversed=false);
-}
-
+//change sorting order of color counts
 function toggleSortColorCounts(reversed=false) {
 	const sortingButton = document.querySelector("#colorCounterPanel .sort");
 	
-	sortColorCounts(reversed);
+	colorCounts.sort((a, b) => reversed ? a[0] - b[0] : b[0] - a[0]);
 	
-    sortingButton.value = `Sort by: ${reversed ? "High" : "Low"}`;
-    sortingButton.onclick = () => toggleSortColorCounts(reversed = reversed ? false : true);
-	displayColorCounts();
+	sortingButton.value = `Sort by: ${reversed ? "High" : "Low"}`;
+	sortingButton.onclick = () => toggleSortColorCounts(reversed = reversed ? false : true);
+	colorCounterPage = 1;
+	showColorCounts(0);
 }
 
-function displayColorCounts() {
-	const sortingButton = document.querySelector("#colorCounterPanel .sort");
-    sortingButton.removeAttribute("disabled");
-
-	colorCounterData = JSON.stringify([...colorCounts]);
-	
+//show current page of color counts
+function showColorCounts(step) {
 	const panel = document.querySelector('#colorCounterPanel > div.colorCounterTable');
 	panel.innerHTML = "";
+
+	const pageSize = 32;
+	if (step == 1 && colorCounterPage < Math.ceil(colorCounts.length / pageSize))
+		colorCounterPage += 1;
+	if (step == -1 && colorCounterPage > 1)
+		colorCounterPage -= 1;
+	document.getElementById('colorCounterPage').innerText = colorCounterPage.toString();
 	
-	let i = 0;
-	colorCounts.forEach((count, color) => {
-		if (1000 <= i++) return; //we only care about the 1000 most common colors
-		const colorEntry = createColorEntry(color, count);
+	const pageStart = pageSize * (colorCounterPage - 1);
+	const pageEnd = Math.min(colorCounts.length, pageSize * colorCounterPage);
+	for (let i = pageStart; i < pageEnd; i++) {
+		const colorEntry = createColorEntry(colorCounts[i][1], colorCounts[i][0]);
 		panel.appendChild(colorEntry);
-	});
+	}
 }
 
-//create color entry div for the color counter panel
+//create color entry for the color counter panel
 function createColorEntry(color, count) {
 
 	const colorEntry = document.createElement('div');
 	colorEntry.classList.add('colorEntry');
-
-    colorEntry.addEventListener("click", () => {
-        navigator.clipboard.writeText(color);
-    });
-
-    colorEntry.setAttribute("title", "Click to copy to clipboard!");
 
 	const colorSquare = document.createElement('div');
 	colorSquare.classList.add('colorSquare');
@@ -1274,41 +1274,40 @@ function createColorEntry(color, count) {
 	const colorText = document.createElement('span');
 	colorText.textContent = color;
 
+	let colorhex = '';
+	const colorVals = color.split(', ');
+	for (let i = 0; i < colorVals.length; i++){
+		let hex = parseInt(colorVals[i]).toString(16);
+		if (hex.length == 1)
+			hex = '0' + hex;
+		colorhex = colorhex + hex;
+	}
+	const hexText = document.createElement('span');
+	hexText.textContent = '#' + colorhex;
+
 	const countText = document.createElement('span');
 	countText.classList.add('count');
 	countText.textContent = "Count: " + count;
 
 	colorEntry.appendChild(colorSquare);
 	colorEntry.appendChild(colorText);
+	colorEntry.appendChild(hexText);
 	colorEntry.appendChild(countText);
 
 	return colorEntry;
 }
 
-function sortColorCounts(reversed=false) {
-	colorCounts = new Map([...colorCounts.entries()].sort((a, b) => {
-		if (a[1] < b[1]) return reversed ? -1 : 1;
-		if (a[1] > b[1]) return reversed ? 1 : -1;
-		return 0;
-	}));
-}
+//calculate color counts array
+function calculateColorCounts() {
+	const pixels = currentImageData.data;
+	const countMap = new Map();
 
-//calculate color counts Map
-function colorCounter() {
-	const pixels = currentImageData.data.reduce((acc, _, i, arr) => {
-	
-		if (i % 4 === 0) {
-			acc.push(arr.slice(i, i + 4).join(", "));
-		}
-		return acc;
-	}, []);
+	const channelCount = (document.getElementById('alphaContainer').style.display == 'inline') ? 4 : 3;
+	for (let i = 0; i < pixels.length; i += 4) {
+		const color = pixels.slice(i, i + channelCount).join(', ');
+		countMap.set(color, (countMap.get(color) || countMap.has(color)) + 1);
+	}
 
-	return pixels.reduce((acc, color) => {
-	
-		acc.set(
-			color, 
-			(acc.get(color) || acc.has(color)) + 1
-		);
-		return acc;
-	}, new Map());
+	colorCounts = []
+	for (const [color, count] of countMap) colorCounts.push([count, color]);
 }

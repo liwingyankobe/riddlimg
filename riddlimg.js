@@ -136,31 +136,37 @@ async function upload(){
 	}
 
 	let img = new Image();
-	img.onload = function() {
+	img.onload = async function() {
 		if (combine) {
 			//upload the second image and combine two images
 			if (imageWidth != this.width || imageHeight != this.height) {
 				message.innerText = 'Not matching image size!';
 				return;
 			}
+			const bitmap = await createImageBitmap(this, {
+				colorSpaceConversion: "none"
+			});
 			let fakeCanvas = document.createElement('canvas');
 			let fakeCtx = fakeCanvas.getContext('2d');
 			fakeCanvas.width = imageWidth;
 			fakeCanvas.height = imageHeight;
-			fakeCtx.drawImage(this, 0, 0);
+			fakeCtx.drawImage(bitmap, 0, 0);
 			secondImageData = fakeCtx.getImageData(0, 0, this.width, this.height);
 			message.innerText = instruction;
 			if (combineMode == -1) combineMode = 0;
 			combineImages(0);
 		} else {
 			//upload single image for manipulation
+			const bitmap = await createImageBitmap(this, {
+				colorSpaceConversion: "none"
+			});
 			imageWidth = this.width;
 			imageHeight = this.height;
 			let fakeCanvas = document.createElement('canvas');
 			let fakeCtx = fakeCanvas.getContext('2d');
 			fakeCanvas.width = imageWidth;
 			fakeCanvas.height = imageHeight;
-			fakeCtx.drawImage(this, 0, 0);
+			fakeCtx.drawImage(bitmap, 0, 0);
 			currentImageData = fakeCtx.getImageData(0, 0, imageWidth, imageHeight);
 
 			//calclate range of scale factor

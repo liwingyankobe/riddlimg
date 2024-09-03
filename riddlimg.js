@@ -1021,7 +1021,8 @@ function viewFrame(step) {
 	const currentFrame = framesData.get_frames()[frameNo];
 	
 	//export frame data to canvas
-	draw(currentFrame.data);
+	currentImageData = currentFrame.data;
+	draw(currentImageData);
 	
 	const frameNoDisplay = frameNo + 1;
 	document.getElementById('frameNo').innerText = frameNoDisplay.toString();

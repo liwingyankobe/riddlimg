@@ -565,8 +565,8 @@ function googleLens(){
 	});
 }
 
-//Yandex image search
-function yandex(){
+//Google or Yandex image search
+function imageSearch(engine){
 	document.getElementById('msg').innerText = 'Loading...';
 	let fakeCanvas = document.createElement('canvas');
 	fakeCanvas.width = imageWidth;
@@ -577,14 +577,14 @@ function yandex(){
 		const searchFile = new File([blob], "image.jpg", {type: "image/jpeg"});
 		let formData = new FormData();
 		formData.append('image[]', searchFile);
-		fetch('yandex.php', {
+		fetch(engine + '.php', {
 			method: 'POST',
 			body: formData
 		})
 		.then((response) => response.text())
 		.then((data) => {
-			document.getElementById('yandexSearch').href = data;
-			document.getElementById('yandexSearch').click();
+			document.getElementById('imageSearch').href = data;
+			document.getElementById('imageSearch').click();
 			document.getElementById('msg').innerText = instruction;
 		});
 	}, 'image/jpeg');

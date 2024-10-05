@@ -155,8 +155,8 @@
 		</div>
 		<div id="searchPanel" class="invisible">
 			<br><br>
-			<input type="button" class="button" value="Google Lens" onclick="googleLens()">
-			<input type="button" class="button" value="Yandex Images" onclick="yandex()">
+			<input type="button" class="button" value="Google Lens" onclick="imageSearch('google')">
+			<input type="button" class="button" value="Yandex Images" onclick="imageSearch('yandex')">
 		</div>
 		<div id="barcodePanel" class="invisible">
 			<br>
@@ -234,10 +234,7 @@
 		</div>
 		<br>
 		<a target="_blank" href="https://github.com/liwingyankobe/riddlimg" class="about">About RiddlImg</a>
-		<form id="googleSearch" class="invisible" target="_blank" action="https://lens.google.com/upload" method="POST" enctype="multipart/form-data">
-			<input type="file" id="googleFile" name="encoded_image">
-		</form>
-		<a id="yandexSearch" target="_blank" class="invisible"></a>
+		<a id="imageSearch" target="_blank" class="invisible"></a>
 		<a id="fileSave" class="invisible"></a>
 	</body>
 </html>

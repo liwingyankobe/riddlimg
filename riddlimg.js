@@ -699,7 +699,7 @@ function threshold() {
 	if (grayScale.length == 0) {
 		pixels = originalImageData.data;
 		for (let i = 0; i < pixels.length; i += 4)
-			grayScale.push(Math.floor(0.299 * pixels[i] + 0.587 * pixels[i+1] + 0.114 * pixels[i+2]));
+			grayScale.push(Math.floor(299 * pixels[i] + 587 * pixels[i+1] + 114 * pixels[i+2]) / 1000);
 	}
 
 	//compare threshold with gray scale image

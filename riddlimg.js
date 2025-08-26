@@ -1201,7 +1201,10 @@ function randomColorMap(){
 
 function initBarcode() {
 	showPanel('barcodePanel');
-	document.getElementById('barcodeContent').innerHTML = barcodeData;
+	if (barcodeData != '')
+		document.getElementById('barcodeContent').innerHTML = barcodeData;
+	else
+		barcode();
 }
 
 //scan common barcodes
@@ -1222,8 +1225,8 @@ function barcode() {
 			document.getElementById('msg').innerText = instruction;
 		})
 		.catch(err => {
-			barcodeData = '';
-			document.getElementById('barcodeContent').innerText = 'Error ' + err;
+			barcodeData = 'Error ' + err;
+			document.getElementById('barcodeContent').innerHTML = barcodeData;
 			document.getElementById('msg').innerText = instruction;
 		});
 	});

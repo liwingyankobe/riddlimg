@@ -1086,7 +1086,7 @@ function extractLSB() {
 				start = start - pixels.length + 4;
 		}
 	}
-	document.getElementById('lsbPreview').innerText = lsbData;
+	document.getElementById('lsbPreview').innerHTML = lsbData;
 }
 
 function initAdvanced() {

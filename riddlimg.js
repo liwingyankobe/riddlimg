@@ -1032,7 +1032,7 @@ function viewFrame(step) {
 //initialize LSB panel
 function initLSB() {
 	showPanel('lsbPanel');
-	document.getElementById('lsbPreview').innerText = lsbData;
+	document.getElementById('lsbPreview').innerHTML = lsbData;
 }
 
 //extract LSB data

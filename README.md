@@ -30,7 +30,6 @@ such as CTF. Please share this tool to your community if you like it :)
 * Random color map
 * Advanced **scripting** on pixel values
 * View EXIF data from `exiftool` (**with a selection of commonly used EXIF tags**)
-	- using the library [PHPExiftool](https://github.com/romainneutron/PHPExiftool)
 * View hidden content after the end of PNG/JPG
 * Shortcut for reverse image search and OCR with [Google](https://www.google.com/imghp) or [Yandex](https://yandex.com/images/)
 * Combine two images with various blending modes

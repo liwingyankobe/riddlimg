@@ -8,15 +8,16 @@ if (!isset($_FILES['image']))
 if ($_FILES['image']['size'][0] > 10000000)
 	exit();
 
-$exiftoolPath = trim(shell_exec('which exiftool'));
+$exiftoolPath = '~/exiftool/exiftool';
 
 // exit program if exiftool binary not in system path
 if (empty($exiftoolPath)) {
+	echo "Not found!";
 	exit();
 }
 
 $tempFile = $_FILES['image']['tmp_name'][0];
-$command = sprintf('%s -G1 -b -L -json %s', escapeshellarg($exiftoolPath), escapeshellarg($tempFile));
+$command = sprintf('%s -G1 -b -L -json %s', $exiftoolPath, escapeshellarg($tempFile));
 
 $output = shell_exec($command);
 $data = json_decode($output, true);
@@ -46,7 +47,7 @@ foreach ($data[0] as $key => $value) {
 		$value = implode(', ', $value);
 	}
 
-	if ($name == 'ThumbnailImage')
+	if (strpos($value, 'base64:') === 0)
 		$result[$group][$name] = @utf8_encode(base64_decode(str_replace('base64:', '', $value)));
 	else
 		$result[$group][$name] = mb_convert_encoding((string)$value, 'UTF-8');

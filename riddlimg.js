@@ -747,46 +747,64 @@ function switchCombine(turn) {
 	}
 }
 
-//combine two images with different blending modes
+// Combine two images with different blending modes.
 function combineImages(step) {
-	if (step == 0) showPanel('combinePanel');
+    if (step === 0) showPanel('combinePanel');
 
-	//select blending mode
-	const modeName = ['XOR', 'OR', 'AND', 'ADD', 'MIN', 'MAX'];
-	combineMode = (combineMode + step + 6) % 6;
-	document.getElementById('combineMode').innerText = modeName[combineMode];
+    const modeNames = ['XOR', 'OR', 'AND', 'ADD', 'MIN', 'MAX'];
+    combineMode = ((combineMode + step) % 6 + 6) % 6;
+    document.getElementById('combineMode').innerText = modeNames[combineMode];
 
-	//compute blending
-	currentImageData = structuredClone(originalImageData);
-	let pixels1 = currentImageData.data;
-	let pixels2 = secondImageData.data;
-	for (let i = 0; i < pixels1.length; i++){
-		if (i % 4 == 3) continue;
-		let value;
-		switch (combineMode) {
-			case 0:	//xor
-				value = pixels1[i] ^ pixels2[i];
-				break;
-			case 1:	//or
-				value = pixels1[i] | pixels2[i];
-				break;
-			case 2:	//and
-				value = pixels1[i] & pixels2[i];
-				break;
-			case 3:	//add
-				value = pixels1[i] + pixels2[i];
-				if (value > 255) value = 255;
-				break;
-			case 4:	//min
-				value = Math.min(pixels1[i], pixels2[i]);
-				break;
-			case 5:	//max
-				value = Math.max(pixels1[i], pixels2[i]);
-				break;
-		}
-		pixels1[i] = value;
-	}
-	draw(currentImageData);
+    currentImageData = structuredClone(originalImageData);
+
+    const pixels1 = currentImageData.data;
+    const pixels2 = secondImageData.data;
+
+    for (let i = 0; i < pixels1.length; i += 4) {
+        const a1 = pixels1[i + 3] / 255;
+        const a2 = pixels2[i + 3] / 255;
+        const alpha = a1 + a2 * (1 - a1);
+
+        for (let c = 0; c < 3; c++) {
+            const c1 = pixels1[i + c];
+            const c2 = pixels2[i + c];
+            let blended;
+
+            switch (combineMode) {
+                case 0: // XOR
+                    blended = c1 ^ c2;
+                    break;
+                case 1: // OR
+                    blended = c1 | c2;
+                    break;
+                case 2: // AND
+                    blended = c1 & c2;
+                    break;
+                case 3: // ADD
+                    blended = Math.min(c1 + c2, 255);
+                    break;
+                case 4: // MIN
+                    blended = Math.min(c1, c2);
+                    break;
+                case 5: // MAX
+                    blended = Math.max(c1, c2);
+                    break;
+            }
+
+            // Combine non-overlapping colors and the blended overlap.
+            pixels1[i + c] = alpha === 0 ? 0 : Math.round(
+                (
+                    c1 * a1 * (1 - a2) +
+                    c2 * a2 * (1 - a1) +
+                    blended * a1 * a2
+                ) / alpha
+            );
+        }
+
+        pixels1[i + 3] = Math.round(alpha * 255);
+    }
+
+    draw(currentImageData);
 }
 
 //view content after the end of image

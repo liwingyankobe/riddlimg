@@ -129,8 +129,8 @@ async function upload(){
 		//upload from file
 		uploadFile = file.files[0];
 
-	//size limit 10MB
-	if (uploadFile.size > 10000000) {
+	//size limit 20MB
+	if (uploadFile.size > 20000000) {
 		message.innerText = 'Too large file size!';
 		return;
 	}

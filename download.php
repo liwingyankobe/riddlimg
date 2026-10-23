@@ -34,6 +34,7 @@ $ch = curl_init();
 $options = [
     CURLOPT_URL            => $url,
     CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_USERAGENT      => 'Mozilla/5.0',
 ];
 
 if ($isOwnWebsite) {
